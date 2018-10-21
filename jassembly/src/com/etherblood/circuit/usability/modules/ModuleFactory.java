@@ -21,6 +21,53 @@ import java.util.function.Supplier;
  */
 public class ModuleFactory {
 
+    public SimpleModule logicalRightShift(int width, int depth) {
+        SimpleModule[] layers = new SimpleModule[depth];
+        WireReference[] select = new WireReference[depth];
+        List<BinaryGate> gates = new ArrayList<>();
+        for (int layer = 0; layer < depth; layer++) {
+            layers[layer] = rightShiftLayer(width, 1 << layer);
+            select[layer] = layers[layer].getIn(width);
+            gates.addAll(Arrays.asList(layers[layer].getGates()));
+        }
+        for (int layer = 0; layer < depth - 1; layer++) {
+            for (int bit = 0; bit < width; bit++) {
+                layers[layer + 1].getIn(bit).setWire(layers[layer].getOut(bit));
+            }
+        }
+        return new SimpleModule(
+                concat(Arrays.copyOf(layers[0].getInputs(), width), select),
+                gates.toArray(new BinaryGate[gates.size()]),
+                layers[depth - 1].getOutputs());
+    }
+
+    private SimpleModule rightShiftLayer(int width, int shift) {
+        WireReference[] in = new WireReference[width];
+        WireReference[] select = new WireReference[width];
+        Wire[] out = new Wire[width];
+        SimpleModule[] muxes = new SimpleModule[width];
+        List<BinaryGate> gates = new ArrayList<>();
+        for (int i = 0; i < width; i++) {
+            muxes[i] = multiplexer();
+            out[i] = muxes[i].getOut(0);
+            in[i] = muxes[i].getIn(0);
+            select[i] = muxes[i].getIn(2);
+            gates.addAll(Arrays.asList(muxes[i].getGates()));
+        }
+        for (int i = 0; i < width; i++) {
+            WireReference in1 = muxes[i].getIn(1);
+            int shifted = i + shift;
+            if (shifted < width) {
+                in[shifted] = combine(in[shifted], in1);
+            } else {
+                in1.setWire(Wire.off());
+            }
+        }
+        return new SimpleModule(concat(in, array(combine(select))),
+                gates.toArray(new BinaryGate[gates.size()]),
+                out);
+    }
+
     public SimpleModule signalModifier(int width) {
         int depth = 2;
         WireReference[] inputs = new WireReference[width];

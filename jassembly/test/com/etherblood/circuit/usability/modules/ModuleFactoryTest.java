@@ -1,17 +1,12 @@
 package com.etherblood.circuit.usability.modules;
 
 import com.etherblood.circuit.usability.signals.WireReference;
-import com.etherblood.circuit.usability.modules.SimpleModule;
-import com.etherblood.circuit.usability.modules.ModuleFactory;
-import com.etherblood.circuit.usability.modules.ModulePrinter;
-import com.etherblood.circuit.core.BinaryGate;
 import com.etherblood.circuit.core.Engine;
 import com.etherblood.circuit.core.Wire;
 import java.util.Arrays;
 import java.util.List;
 import org.junit.Test;
 import static org.junit.Assert.*;
-import org.junit.Ignore;
 
 /**
  *
@@ -23,28 +18,45 @@ public class ModuleFactoryTest {
     private final ModulePrinter printer = new ModulePrinter();
 
     @Test
+    public void logicalRightShift() {
+        int depth = 3;
+        int width = 1 << depth;
+        int value = 157;
+        int shift = 3;
+        SimpleModule shifter = factory.logicalRightShift(width, depth);
+        assertEquals(width + depth, shifter.inputCount());
+        assertEquals(width, shifter.outputCount());
+        setInput(shifter, 0, width, value);
+        setInput(shifter, width, depth, shift);
+        compute(shifter);
+        assertEquals(value >> shift, getOutput(shifter, 0, width));
+    }
+
+    @Test
     public void signalModifier() {
         int width = 4;
         SimpleModule mod = factory.signalModifier(width);
+        assertEquals(width + 2, mod.inputCount());
+        assertEquals(width, mod.outputCount());
         setInput(mod, 0, width, 7);
-        
+
         setInput(mod, width, 2, 0);
         compute(mod);
         assertEquals(7, getOutput(mod, 0, width));
-        
+
         setInput(mod, width, 2, 1);
         compute(mod);
         assertEquals(1, getOutput(mod, 0, width));
-        
+
         setInput(mod, width, 2, 2);
         compute(mod);
         assertEquals(8, getOutput(mod, 0, width));
-        
+
         setInput(mod, width, 2, 3);
         compute(mod);
         assertEquals(14, getOutput(mod, 0, width));
     }
-    
+
     @Test
     public void counter() {
         int width = 32;
@@ -60,13 +72,14 @@ public class ModuleFactoryTest {
             compute(counter);
         }
     }
+
     @Test
     public void incrementer() {
         int width = 32;
         SimpleModule incrementer = factory.incrementer(width);
         assertEquals(width + 1, incrementer.inputCount());
         assertEquals(width, incrementer.outputCount());
-        
+
         int value = 2345;
         incrementer.getIn(width).setWire(Wire.on());
         setInput(incrementer, 0, width, value);
