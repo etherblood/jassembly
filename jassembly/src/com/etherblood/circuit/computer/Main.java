@@ -24,15 +24,18 @@ public class Main {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-        int a = 13;//x1
-        int b = 6;//x2
-        int sum = 0;//x3
-        while (a != 0) {
-            if ((a & 1) != 0) {
-                sum += b;
+        {
+            int x1 = 13;
+            int x2 = 6;
+            int x3 = 0;
+            while (x2 != 0) {
+                if ((x2 & 1) != 0) {
+                    x3 += x1;
+                }
+                x2 >>>= 1;
+                x1 <<= 1;
             }
-            a >>>= 1;
-            b <<= 1;
+            int acc = x3;
         }
 
         //program above is encoded below
