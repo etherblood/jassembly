@@ -18,6 +18,31 @@ public class ModuleFactoryTest {
     private final ModulePrinter printer = new ModulePrinter();
 
     @Test
+    public void logicUnit() {
+        int width = 7;
+        SimpleModule lu = factory.logicUnit(width);
+        assertEquals(2 * width + 2, lu.inputCount());
+        assertEquals(width, lu.outputCount());
+        int a = 5;
+        int b = 3;
+        setInput(lu, 0, width, a);
+        setInput(lu, width, width, b);
+        
+        setInput(lu, 2 * width, 2, 0);
+        compute(lu);
+        assertEquals(a & b, getOutput(lu, 0, width));
+        
+        setInput(lu, 2 * width, 2, 1);
+        compute(lu);
+        assertEquals(a | b, getOutput(lu, 0, width));
+        
+        setInput(lu, 2 * width, 2, 2);
+        compute(lu);
+        assertEquals(a ^ b, getOutput(lu, 0, width));
+        
+    }
+    
+    @Test
     public void logicalRightShift() {
         int depth = 3;
         int width = 1 << depth;
@@ -46,7 +71,7 @@ public class ModuleFactoryTest {
 
         setInput(mod, width, 2, 1);
         compute(mod);
-        assertEquals(1, getOutput(mod, 0, width));
+        assertEquals(15, getOutput(mod, 0, width));
 
         setInput(mod, width, 2, 2);
         compute(mod);

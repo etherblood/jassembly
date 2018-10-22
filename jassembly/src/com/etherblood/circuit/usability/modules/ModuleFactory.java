@@ -21,6 +21,51 @@ import java.util.function.Supplier;
  */
 public class ModuleFactory {
 
+    public SimpleModule logicUnit(int width) {
+        int depth = 2;
+        WireReference[] inA = new WireReference[width];
+        WireReference[] inB = new WireReference[width];
+        WireReference[] inSelect = new WireReference[depth];
+        Wire[] out = new Wire[width];
+        List<BinaryGate> gates = new ArrayList<>();
+        
+        SimpleModule demuxA = demultiplexer(width, depth);
+        SimpleModule demuxB = demultiplexer(width, depth);
+        SimpleModule mux = multiplexer(width, depth);
+        SimpleModule and = parallelBinary(this::and, width);
+        SimpleModule or = parallelBinary(this::or, width);
+        SimpleModule xor = parallelBinary(this::xor, width);
+        
+        for (int i = 0; i < width; i++) {
+            inA[i] = demuxA.getIn(i);
+            inB[i] = demuxB.getIn(i);
+            out[i] = mux.getOut(i);
+            
+            and.getIn(i).setWire(demuxA.getOut(i));
+            and.getIn(width + i).setWire(demuxB.getOut(i));
+            mux.getIn(i).setWire(and.getOut(i));
+            
+            or.getIn(i).setWire(demuxA.getOut(width + i));
+            or.getIn(width + i).setWire(demuxB.getOut(width + i));
+            mux.getIn(width + i).setWire(or.getOut(i));
+            
+            xor.getIn(i).setWire(demuxA.getOut(2 * width + i));
+            xor.getIn(width + i).setWire(demuxB.getOut(2 * width + i));
+            mux.getIn(2 * width + i).setWire(xor.getOut(i));
+        }
+        for (int i = 0; i < depth; i++) {
+            inSelect[i] = combine(demuxA.getIn(width + i), demuxB.getIn(width + i), mux.getIn(4 * width + i));
+        }
+        gates.addAll(Arrays.asList(demuxA.getGates()));
+        gates.addAll(Arrays.asList(demuxB.getGates()));
+        gates.addAll(Arrays.asList(mux.getGates()));
+        gates.addAll(Arrays.asList(and.getGates()));
+        gates.addAll(Arrays.asList(or.getGates()));
+        gates.addAll(Arrays.asList(xor.getGates()));
+        
+        return new SimpleModule(concat(inA, inB, inSelect), gates.toArray(new BinaryGate[gates.size()]), out);
+    }
+    
     public SimpleModule logicalRightShift(int width, int depth) {
         SimpleModule[] layers = new SimpleModule[depth];
         WireReference[] select = new WireReference[depth];
@@ -84,7 +129,7 @@ public class ModuleFactory {
         for (int i = 0; i < width; i++) {
             mux.getIn(i).setWire(demux.getOut(i));
 
-            mux.getIn(width + i).setWire(Wire.off());
+            mux.getIn(width + i).setWire(any.getOut(0));
             any.getIn(i).setWire(demux.getOut(width + i));
 
             mux.getIn(2 * width + i).setWire(not.getOut(i));
@@ -93,7 +138,6 @@ public class ModuleFactory {
             mux.getIn(3 * width + i).setWire(demux.getOut(4 * width - i - 1));
             inputs[i] = demux.getIn(i);
         }
-        mux.getIn(width).setWire(any.getOut(0));
         return new SimpleModule(
                 concat(inputs, array(combine(mux.getIn(width * (1 << depth)), demux.getIn(width)), combine(mux.getIn(width * (1 << depth) + 1), demux.getIn(width + 1)))),
                 gates.toArray(new BinaryGate[gates.size()]),
@@ -109,10 +153,12 @@ public class ModuleFactory {
         SimpleModule or = or();
         or.getIn(0).setWire(a.getOut(0));
         or.getIn(1).setWire(b.getOut(0));
+        Wire[] out = new Wire[width];
+        Arrays.fill(out, or.getOut(0));
         return new SimpleModule(
                 concat(a.getInputs(), b.getInputs()),
                 concat(a.getGates(), b.getGates(), or.getGates()),
-                or.getOutputs());
+                out);
     }
 
     public SimpleModule noop(int inCount, int outCount) {

@@ -24,10 +24,88 @@ public class Main {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
+        int a = 13;//x1
+        int b = 6;//x2
+        int sum = 0;//x3
+        while (a != 0) {
+            if ((a & 1) != 0) {
+                sum += b;
+            }
+            a >>>= 1;
+            b <<= 1;
+        }
+
+        //program above is encoded below
+        int loopHead = 6, loopBody = 17, loopEnd = 49;
+        int ifBody = 32, ifEnd = 37;
+        List<Integer> program = new ArrayList<>();
+        program.add(Command.LOAD_CONST.ordinal());
+        program.add(13);
+        program.add(Command.TO_X1.ordinal());
+        program.add(Command.LOAD_CONST.ordinal());
+        program.add(6);
+        program.add(Command.TO_X2.ordinal());
+        // loop_head:
+        program.add(Command.FROM_X2.ordinal());
+
+        program.add(Command.ANY.ordinal());
+        program.add(Command.TO_X0.ordinal());
+        program.add(Command.LOAD_CONST.ordinal());
+        program.add(loopBody - loopEnd);
+        program.add(Command.AND.ordinal());
+        program.add(Command.TO_X0.ordinal());
+        program.add(Command.LOAD_CONST.ordinal());
+        program.add(loopEnd);
+        program.add(Command.ADD_X0.ordinal());
+        program.add(Command.JUMP.ordinal());
+        // loop_body:
+        // if_head:
+        program.add(Command.FROM_X2.ordinal());
+        program.add(Command.TO_X0.ordinal());
+        program.add(Command.LOAD_CONST.ordinal());
+        program.add(1);
+        program.add(Command.AND.ordinal());
+
+        program.add(Command.ANY.ordinal());
+        program.add(Command.TO_X0.ordinal());
+        program.add(Command.LOAD_CONST.ordinal());
+        program.add(ifBody - ifEnd);
+        program.add(Command.AND.ordinal());
+        program.add(Command.TO_X0.ordinal());
+        program.add(Command.LOAD_CONST.ordinal());
+        program.add(ifEnd);
+        program.add(Command.ADD_X0.ordinal());
+        program.add(Command.JUMP.ordinal());
+        // if_body:
+        program.add(Command.FROM_X1.ordinal());
+        program.add(Command.TO_X0.ordinal());
+        program.add(Command.FROM_X3.ordinal());
+        program.add(Command.ADD_X0.ordinal());
+        program.add(Command.TO_X3.ordinal());
+        // if_end:
+        program.add(Command.LOAD_CONST.ordinal());
+        program.add(1);
+        program.add(Command.TO_X0.ordinal());
+        program.add(Command.FROM_X2.ordinal());
+        program.add(Command.RSHIFT_X0.ordinal());
+        program.add(Command.TO_X2.ordinal());
+        program.add(Command.FROM_X1.ordinal());
+        program.add(Command.LSHIFT_X0.ordinal());
+        program.add(Command.TO_X1.ordinal());
+
+        program.add(Command.LOAD_CONST.ordinal());
+        program.add(loopHead);
+        program.add(Command.JUMP.ordinal());
+        // loop_end:
+        program.add(Command.FROM_X3.ordinal());
+
         ModuleFactory factory = new ModuleFactory();
+        int depth = 3;
         int width = 8;
         MemoryModule ram = factory.ram(width);
         SimpleModule adder = factory.rippleCarryAdder(width);
+        SimpleModule rshift = factory.logicalRightShift(width, depth);
+        SimpleModule lu = factory.logicUnit(width);
 
         MemoryModule command = factory.msFlipFlop(width);
         SimpleModule commandMux = factory.multiplexer(width);
@@ -66,19 +144,25 @@ public class Main {
         };
         List<WireReference>[] operatorInputsA = new List[]{
             inBus(ram, 0, width),
-            inBus(adder, 0, width)
+            inBus(adder, 0, width),
+            inBus(rshift, 0, width),
+            inBus(lu, 0, width)
         };
         List<WireReference>[] operatorInputsB = new List[]{
             inBus(ram, width, width),
-            inBus(adder, width, width)
+            inBus(adder, width, width),
+            inBus(rshift, width, depth),
+            inBus(lu, width, width)
         };
         List<Wire>[] operatorOutputs = new List[]{
             outBus(ram, 0, width),
-            outBus(adder, 0, width)
+            outBus(adder, 0, width),
+            outBus(rshift, 0, width),
+            outBus(lu, 0, width)
         };
 
-        int registersAddressWidth = 32 - Integer.numberOfLeadingZeros(registerInputs.length - 1);
-        int operatorsAddressWidth = 32 - Integer.numberOfLeadingZeros(operatorInputsA.length - 1);
+        int registersAddressWidth = ControlSignals.R0_ADR.length;
+        int operatorsAddressWidth = ControlSignals.OP_ADR.length;
 
         SimpleModule busMuxRead0 = factory.multiplexer(width, registersAddressWidth);
         SimpleModule busDemuxRead0 = factory.demultiplexer(width, operatorsAddressWidth);
@@ -86,27 +170,29 @@ public class Main {
         SimpleModule busDemuxRead1 = factory.demultiplexer(width, operatorsAddressWidth);
         SimpleModule busMuxWrite = factory.multiplexer(width, operatorsAddressWidth);
         SimpleModule busDemuxWrite = factory.demultiplexer(width + 1, registersAddressWidth);
-        SimpleModule opArgDemux = factory.demultiplexer(1, operatorsAddressWidth);
+        SimpleModule opArgDemux = factory.demultiplexer(ControlSignals.OP_ARG.length, operatorsAddressWidth);
 
         SimpleModule modRead0 = factory.signalModifier(width);
         SimpleModule modWrite = factory.signalModifier(width);
-        
-        adder.getIn(2 * width).setWire(opArgDemux.getOut(1));
+
+        adder.getIn(2 * width).setWire(opArgDemux.getOut(ControlSignals.ADD_ADR * ControlSignals.OP_ARG.length));
+        lu.getIn(2 * width).setWire(opArgDemux.getOut(ControlSignals.LU_ADR * ControlSignals.OP_ARG.length));
+        lu.getIn(2 * width + 1).setWire(opArgDemux.getOut(ControlSignals.LU_ADR * ControlSignals.OP_ARG.length + 1));
 
         List<WireReference> controlSignals = new ArrayList<>();
         controlSignals.add(pcInc.getIn(width));
-        controlSignals.addAll(inBus(busMuxRead0, registerOutputs.length * width, registersAddressWidth));
-        controlSignals.addAll(inBus(busMuxRead1, registerOutputs.length * width, registersAddressWidth));
+        controlSignals.addAll(inBus(busMuxRead0, (1 << ControlSignals.R0_ADR.length) * width, registersAddressWidth));
+        controlSignals.addAll(inBus(busMuxRead1, (1 << ControlSignals.R0_ADR.length) * width, registersAddressWidth));
         controlSignals.addAll(inBus(busDemuxWrite, width + 1, registersAddressWidth));
         controlSignals.addAll(combineFour(
                 inBus(busDemuxRead0, width, operatorsAddressWidth),
                 inBus(busDemuxRead1, width, operatorsAddressWidth),
-                inBus(busMuxWrite, operatorOutputs.length * width, operatorsAddressWidth),
-                inBus(opArgDemux, 1, operatorsAddressWidth)));
-        controlSignals.add(opArgDemux.getIn(0));
-        controlSignals.addAll(inBus(modRead0, width, 2));
-        controlSignals.addAll(inBus(modWrite, width, 2));
-        assert controlSignals.size() <= ControlSignals.SIGNAL_BITS;
+                inBus(busMuxWrite, (1 << ControlSignals.OP_ADR.length) * width, operatorsAddressWidth),
+                inBus(opArgDemux, ControlSignals.OP_ARG.length, operatorsAddressWidth)));
+        controlSignals.addAll(Arrays.asList(opArgDemux.getInputs()).subList(0, ControlSignals.OP_ARG.length));
+        controlSignals.addAll(inBus(modRead0, width, ControlSignals.R0_MOD.length));
+        controlSignals.addAll(inBus(modWrite, width, ControlSignals.W_MOD.length));
+        assert controlSignals.size() == ControlSignals.SIGNAL_BITS;
 
         SimpleModule commandDecodeMux = factory.multiplexer(ControlSignals.SIGNAL_BITS, width);
         Command[] commands = Command.values();
@@ -115,13 +201,9 @@ public class Main {
             ram.getSignals().subRange(i * width, width).set(Command.WAIT.ordinal());
         }
         int nextLine = 0;
-        ram.getSignals().subRange(nextLine++ * width, width).set(Command.LOAD_CONST.ordinal());
-        ram.getSignals().subRange(nextLine++ * width, width).set(3);
-        ram.getSignals().subRange(nextLine++ * width, width).set(Command.TO_X0.ordinal());
-        ram.getSignals().subRange(nextLine++ * width, width).set(Command.LOAD_CONST.ordinal());
-        ram.getSignals().subRange(nextLine++ * width, width).set(17);
-        ram.getSignals().subRange(nextLine++ * width, width).set(Command.SUB_X0.ordinal());
-        ram.getSignals().subRange(nextLine++ * width, width).set(Command.JUMP.ordinal());
+        for (int lineCode : program) {
+            ram.getSignals().subRange(nextLine++ * width, width).set(lineCode);
+        }
         command.getSignals().set(Command.LOAD_CMD.ordinal());
 
         Engine engine = new Engine();
@@ -147,6 +229,8 @@ public class Main {
         engine.activate(quiet(busMuxWrite).getGates());
         engine.activate(quiet(modRead0).getGates());
         engine.activate(quiet(modWrite).getGates());
+        engine.activate(quiet(rshift).getGates());
+        engine.activate(quiet(lu).getGates());
 
         connect(commandMux, 0, command, 0, width);
         setInput(commandMux, 0, width, Command.LOAD_CMD.ordinal());
@@ -198,11 +282,11 @@ public class Main {
         while (engine.isActive()) {
             engine.tick();
         }
-        for (int i = 0; i < 12; i++) {
+        for (int i = 0; i < 236; i++) {
             System.out.println("ram: " + ram.getSignals().toHexStrig());
+            System.out.println("pc: " + pc.getSignals().toHexStrig());
             SignalRange currentCommand = command.getSignals();
             System.out.println("cmd: " + currentCommand.toHexStrig() + " (" + commands[(int) currentCommand.getAsLong()] + ")");
-            System.out.println("pc: " + pc.getSignals().toHexStrig());
             System.out.println("ac: " + acc.getSignals().toHexStrig());
             System.out.println("x0: " + x0.getSignals().toHexStrig());
             System.out.println("x1: " + x1.getSignals().toHexStrig());
