@@ -24,9 +24,11 @@ public class Main {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
+        int a = 13;
+        int b = 16;
         {
-            int x1 = 13;
-            int x2 = 6;
+            int x1 = a;
+            int x2 = b;
             int x3 = 0;
             while (x2 != 0) {
                 if ((x2 & 1) != 0) {
@@ -43,10 +45,10 @@ public class Main {
         int ifBody = 32, ifEnd = 37;
         List<Integer> program = new ArrayList<>();
         program.add(Command.LOAD_CONST.ordinal());
-        program.add(13);
+        program.add(a);
         program.add(Command.TO_X1.ordinal());
         program.add(Command.LOAD_CONST.ordinal());
-        program.add(6);
+        program.add(b);
         program.add(Command.TO_X2.ordinal());
         // loop_head:
         program.add(Command.FROM_X2.ordinal());
@@ -54,12 +56,12 @@ public class Main {
         program.add(Command.ANY.ordinal());
         program.add(Command.TO_X0.ordinal());
         program.add(Command.LOAD_CONST.ordinal());
-        program.add(loopBody - loopEnd);
+        program.add(loopBody ^ loopEnd);
         program.add(Command.AND.ordinal());
         program.add(Command.TO_X0.ordinal());
         program.add(Command.LOAD_CONST.ordinal());
         program.add(loopEnd);
-        program.add(Command.ADD_X0.ordinal());
+        program.add(Command.XOR.ordinal());
         program.add(Command.JUMP.ordinal());
         // loop_body:
         // if_head:
@@ -72,28 +74,28 @@ public class Main {
         program.add(Command.ANY.ordinal());
         program.add(Command.TO_X0.ordinal());
         program.add(Command.LOAD_CONST.ordinal());
-        program.add(ifBody - ifEnd);
+        program.add(ifBody ^ ifEnd);
         program.add(Command.AND.ordinal());
         program.add(Command.TO_X0.ordinal());
         program.add(Command.LOAD_CONST.ordinal());
         program.add(ifEnd);
-        program.add(Command.ADD_X0.ordinal());
+        program.add(Command.XOR.ordinal());
         program.add(Command.JUMP.ordinal());
         // if_body:
         program.add(Command.FROM_X1.ordinal());
         program.add(Command.TO_X0.ordinal());
         program.add(Command.FROM_X3.ordinal());
-        program.add(Command.ADD_X0.ordinal());
+        program.add(Command.ADD.ordinal());
         program.add(Command.TO_X3.ordinal());
         // if_end:
         program.add(Command.LOAD_CONST.ordinal());
         program.add(1);
         program.add(Command.TO_X0.ordinal());
         program.add(Command.FROM_X2.ordinal());
-        program.add(Command.RSHIFT_X0.ordinal());
+        program.add(Command.RSHIFT.ordinal());
         program.add(Command.TO_X2.ordinal());
         program.add(Command.FROM_X1.ordinal());
-        program.add(Command.LSHIFT_X0.ordinal());
+        program.add(Command.LSHIFT.ordinal());
         program.add(Command.TO_X1.ordinal());
 
         program.add(Command.LOAD_CONST.ordinal());
@@ -101,6 +103,7 @@ public class Main {
         program.add(Command.JUMP.ordinal());
         // loop_end:
         program.add(Command.FROM_X3.ordinal());
+        program.add(Command.TERMINATE.ordinal());
 
         ModuleFactory factory = new ModuleFactory();
         int depth = 3;
@@ -285,10 +288,11 @@ public class Main {
         while (engine.isActive()) {
             engine.tick();
         }
-        for (int i = 0; i < 236; i++) {
+        SignalRange currentCommand;
+        do {
+            currentCommand = command.getSignals();
             System.out.println("ram: " + ram.getSignals().toHexStrig());
             System.out.println("pc: " + pc.getSignals().toHexStrig());
-            SignalRange currentCommand = command.getSignals();
             System.out.println("cmd: " + currentCommand.toHexStrig() + " (" + commands[(int) currentCommand.getAsLong()] + ")");
             System.out.println("ac: " + acc.getSignals().toHexStrig());
             System.out.println("x0: " + x0.getSignals().toHexStrig());
@@ -306,7 +310,7 @@ public class Main {
             while (engine.isActive()) {
                 engine.tick();
             }
-        }
+        } while (currentCommand.getAsLong() != Command.TERMINATE.ordinal());
     }
 
     private static <T extends SimpleModule> T quiet(T mod) {

@@ -1,9 +1,7 @@
 package com.etherblood.circuit.core;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import com.etherblood.circuit.core.collections.FastArrayList;
+import com.etherblood.circuit.core.collections.FastVersionedSet;
 
 /**
  *
@@ -11,8 +9,17 @@ import java.util.Set;
  */
 public class Engine {
 
-    private final Set<BinaryGate> gates = new HashSet<>();
-    private final List<Wire> wires = new ArrayList<>();
+    private final FastVersionedSet<BinaryGate> gates;
+    private final FastArrayList<Wire> wires;
+
+    public Engine() {
+        this(100000, 100000);
+    }
+
+    public Engine(int maxWires, int maxGates) {
+        this.wires = new FastArrayList<>(new Wire[maxWires]);
+        this.gates = new FastVersionedSet<>(BinaryGate::getId, new BinaryGate[maxGates]);
+    }
 
     public void tick() {
         for (BinaryGate gate : gates) {//can be parallel (make collections concurrent)
@@ -31,7 +38,7 @@ public class Engine {
     }
 
     public boolean isActive() {
-        return !gates.isEmpty();
+        return gates.size() > 0;
     }
 
     public void activate(BinaryGate... gates) {

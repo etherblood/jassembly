@@ -42,6 +42,7 @@ public class ModuleUtil {
     }
 
     public static WireReference combine(WireReference... consumers) {
+        assert consumers.length <= Wire.MAX_CHILDS;
         return new WireReference() {
             @Override
             public Wire getWire() {

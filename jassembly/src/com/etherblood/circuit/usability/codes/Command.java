@@ -13,10 +13,10 @@ public enum Command {
     AND(set(OP_ADR, LU_ADR) | set(R0_ADR, ACC_ADR) | set(R1_ADR, X0_ADR) | set(W_ADR, ACC_ADR) | set(OP_ARG, LU_AND)),
     OR(set(OP_ADR, LU_ADR) | set(R0_ADR, ACC_ADR) | set(R1_ADR, X0_ADR) | set(W_ADR, ACC_ADR) | set(OP_ARG, LU_OR)),
     XOR(set(OP_ADR, LU_ADR) | set(R0_ADR, ACC_ADR) | set(R1_ADR, X0_ADR) | set(W_ADR, ACC_ADR) | set(OP_ARG, LU_XOR)),
-    ADD_X0(set(OP_ADR, ADD_ADR) | set(R0_ADR, ACC_ADR) | set(R1_ADR, X0_ADR) | set(W_ADR, ACC_ADR)),
-    SUB_X0(set(OP_ADR, ADD_ADR) | set(R1_ADR, ACC_ADR) | set(R0_ADR, X0_ADR) | set(W_ADR, ACC_ADR) | set(OP_ARG, 1) | set(R0_MOD, MOD_INV)),
-    RSHIFT_X0(set(OP_ADR, RSHIFT_ADR) | set(R0_ADR, ACC_ADR) | set(R1_ADR, X0_ADR) | set(W_ADR, ACC_ADR)),
-    LSHIFT_X0(set(OP_ADR, RSHIFT_ADR) | set(R0_ADR, ACC_ADR) | set(R1_ADR, X0_ADR) | set(W_ADR, ACC_ADR) | set(R0_MOD, MOD_REV) | set(W_MOD, MOD_REV)),
+    ADD(set(OP_ADR, ADD_ADR) | set(R0_ADR, ACC_ADR) | set(R1_ADR, X0_ADR) | set(W_ADR, ACC_ADR)),
+    SUB(set(OP_ADR, ADD_ADR) | set(R1_ADR, ACC_ADR) | set(R0_ADR, X0_ADR) | set(W_ADR, ACC_ADR) | set(OP_ARG, 1) | set(R0_MOD, MOD_INV)),
+    RSHIFT(set(OP_ADR, RSHIFT_ADR) | set(R0_ADR, ACC_ADR) | set(R1_ADR, X0_ADR) | set(W_ADR, ACC_ADR)),
+    LSHIFT(set(OP_ADR, RSHIFT_ADR) | set(R0_ADR, ACC_ADR) | set(R1_ADR, X0_ADR) | set(W_ADR, ACC_ADR) | set(R0_MOD, MOD_REV) | set(W_MOD, MOD_REV)),
     FROM_X0(set(OP_ADR, ADD_ADR) | set(R0_ADR, X0_ADR) | set(W_ADR, ACC_ADR)),
     TO_X0(set(OP_ADR, ADD_ADR) | set(R0_ADR, ACC_ADR) | set(W_ADR, X0_ADR)),
     FROM_X1(set(OP_ADR, ADD_ADR) | set(R0_ADR, X1_ADR) | set(W_ADR, ACC_ADR)),
@@ -31,6 +31,7 @@ public enum Command {
     ANY(set(OP_ADR, ADD_ADR) | set(R0_ADR, ACC_ADR) | set(W_ADR, ACC_ADR) | set(R0_MOD, MOD_ANY)),
     INC(set(OP_ADR, ADD_ADR) | set(R0_ADR, ACC_ADR) | set(W_ADR, ACC_ADR) | set(OP_ARG, 1)),
     DEC(set(OP_ADR, ADD_ADR) | set(R1_ADR, ACC_ADR) | set(W_ADR, ACC_ADR) | set(R0_MOD, MOD_INV)),
+    TERMINATE(~0L),
     UNDEFINED(~0L);
 
     private final long controlSignals;

@@ -271,7 +271,7 @@ public class ModuleFactory {
 
     public MemoryModule ram(int width) {
         int words = 1 << width;
-        SimpleModule demux = demultiplexer(1, width);
+        SimpleModule demux = demultiplexer(width + 1, width);
         SimpleModule mux = multiplexer(width, width);
 
         //TODO: fix
@@ -282,30 +282,25 @@ public class ModuleFactory {
         }
 
         WireReference[] address = new WireReference[width];
-        WireReference write = demux.getIn(0);
-
-        WireReference[][] dataList = new WireReference[width][words];
         List<BinaryGate> gates = new ArrayList<>();
         HasSignal[] signals = new HasSignal[words * width];
         for (int word = 0; word < words; word++) {
             MemoryModule dFlipFlop = dGatedFlipFlop(width);
             for (int bit = 0; bit < width; bit++) {
                 signals[word * width + bit] = dFlipFlop.getSignals().get(bit);
-                dataList[bit][word] = dFlipFlop.getIn(bit);
+                dFlipFlop.getIn(bit).setWire(demux.getOut(word * (width + 1) + bit));
                 mux.getIn(word * width + bit).setWire(dFlipFlop.getOut(bit));
             }
-            dFlipFlop.getIn(width).setWire(demux.getOut(word));
+            dFlipFlop.getIn(width).setWire(demux.getOut(word * (width + 1) + width));
             gates.addAll(Arrays.asList(dFlipFlop.getGates()));
         }
-        WireReference[] data = new WireReference[width];
         for (int bit = 0; bit < width; bit++) {
-            data[bit] = combine(dataList[bit]);
-            address[bit] = combine(mux.getIn(words * width + bit), demux.getIn(1 + bit));
+            address[bit] = combine(mux.getIn(words * width + bit), demux.getIn(width + 1 + bit));
         }
 
         return new MemoryModule(
                 new SignalRange(signals),
-                concat(data, address, array(write)),
+                concat(Arrays.copyOf(demux.getInputs(), width), address, array(demux.getIn(width))),
                 concat(demux.getGates(), mux.getGates(), gates.toArray(new BinaryGate[gates.size()])),
                 mux.getOutputs());
     }
@@ -377,7 +372,6 @@ public class ModuleFactory {
         if (depth == 1) {
             return demultiplexer(width);
         }
-//        WireReference[] signal = new WireReference[depth];
         int subSize = width + depth - 1;
         SimpleModule demux = demultiplexer(subSize);
         SimpleModule demuxA = demultiplexer(width, depth - 1);
@@ -387,10 +381,6 @@ public class ModuleFactory {
             demuxB.getIn(i).setWire(demux.getOut(subSize + i));
         }
         WireReference[] inputs = Arrays.copyOf(demux.getInputs(), subSize);
-//        for (int i = 0; i < depth - 1; i++) {
-//            signal[i] = combine(demuxA.getIn(width + i), demuxB.getIn(width + i));
-//        }
-//        signal[depth - 1] = demux.getIn(width);
         return new SimpleModule(
                 concat(inputs, array(demux.getIn(subSize))),
                 concat(demux.getGates(), demuxA.getGates(), demuxB.getGates()),

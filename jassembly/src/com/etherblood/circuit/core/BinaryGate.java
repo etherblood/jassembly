@@ -1,7 +1,11 @@
 package com.etherblood.circuit.core;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 public abstract class BinaryGate {
 
+    private static final AtomicInteger ID_SUPPLY = new AtomicInteger(0);
+    private final int id = ID_SUPPLY.getAndIncrement();
     private Wire a, b;
     private final Wire out;
 
@@ -60,6 +64,20 @@ public abstract class BinaryGate {
 
     public Wire getOut() {
         return out;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    @Override
+    public int hashCode() {
+        return id;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return this == obj;
     }
 
 }
