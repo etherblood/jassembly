@@ -1,5 +1,6 @@
 package com.etherblood.circuit.core.collections;
 
+import java.util.Arrays;
 import java.util.Iterator;
 
 /**
@@ -8,14 +9,18 @@ import java.util.Iterator;
  */
 public class FastArrayList<T> implements Iterable<T> {
 
-    private final T[] data;
+    private T[] data;
     private int count = 0;
 
-    public FastArrayList(T[] data) {
-        this.data = data;
+    @SuppressWarnings("unchecked")
+    public FastArrayList() {
+        this.data = (T[]) new Object[8];
     }
 
     public void add(T item) {
+        if(count == data.length) {
+            data = Arrays.copyOf(data, 2 * count);
+        }
         data[count++] = item;
     }
 

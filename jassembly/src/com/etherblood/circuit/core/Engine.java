@@ -13,12 +13,8 @@ public class Engine {
     private final FastArrayList<Wire> wires;
 
     public Engine() {
-        this(100000, 100000);
-    }
-
-    public Engine(int maxWires, int maxGates) {
-        this.wires = new FastArrayList<>(new Wire[maxWires]);
-        this.gates = new FastVersionedSet<>(BinaryGate::getId, new BinaryGate[maxGates]);
+        this.wires = new FastArrayList<>();
+        this.gates = new FastVersionedSet<>(BinaryGate::getId);
     }
 
     public void tick() {
