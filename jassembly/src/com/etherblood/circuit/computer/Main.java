@@ -43,29 +43,36 @@ public class Main {
         int width = 8;
         Computer computer = new Computer(width, program_0);
         Engine engine = new Engine();
-        SignalRange currentCommand;
-        do {
-            currentCommand = computer.command.getSignals();
-            System.out.println("ram: " + computer.ram.getSignals().toHexStrig());
-            System.out.println("pc: " + computer.pc.getSignals().toHexStrig());
-            System.out.println("cmd: " + currentCommand.toHexStrig() + " (" + Command.values()[(int) currentCommand.getAsLong()] + ")");
-            System.out.println("ac: " + computer.acc.getSignals().toHexStrig());
-            System.out.println("x0: " + computer.x0.getSignals().toHexStrig());
-            System.out.println("x1: " + computer.x1.getSignals().toHexStrig());
-            System.out.println("x2: " + computer.x2.getSignals().toHexStrig());
-            System.out.println("x3: " + computer.x3.getSignals().toHexStrig());
-            System.out.println();
-            computer.clockWire.setSignal(!computer.clockWire.getSignal());
-            engine.activate(computer.clockWire);
-            while (engine.isActive()) {
-                engine.tick();
-            }
-            computer.clockWire.setSignal(!computer.clockWire.getSignal());
-            engine.activate(computer.clockWire);
-            while (engine.isActive()) {
-                engine.tick();
-            }
-        } while (currentCommand.getAsLong() != Command.TERMINATE.ordinal());
+        while (computer.command.getSignals().getAsLong() != Command.TERMINATE.ordinal()) {
+            advanceCycle(computer, engine);
+            printState(computer);
+        }
+    }
+
+    private static void advanceCycle(Computer computer, Engine engine) {
+        computer.clockWire.setSignal(!computer.clockWire.getSignal());
+        engine.activate(computer.clockWire);
+        while (engine.isActive()) {
+            engine.tick();
+        }
+        computer.clockWire.setSignal(!computer.clockWire.getSignal());
+        engine.activate(computer.clockWire);
+        while (engine.isActive()) {
+            engine.tick();
+        }
+    }
+
+    private static void printState(Computer computer) {
+        SignalRange currentCommand = computer.command.getSignals();
+        System.out.println("ram: " + computer.ram.getSignals().toHexStrig());
+        System.out.println("pc: " + computer.pc.getSignals().toHexStrig());
+        System.out.println("cmd: " + currentCommand.toHexStrig() + " (" + Command.values()[(int) currentCommand.getAsLong()] + ")");
+        System.out.println("ac: " + computer.acc.getSignals().toHexStrig());
+        System.out.println("x0: " + computer.x0.getSignals().toHexStrig());
+        System.out.println("x1: " + computer.x1.getSignals().toHexStrig());
+        System.out.println("x2: " + computer.x2.getSignals().toHexStrig());
+        System.out.println("x3: " + computer.x3.getSignals().toHexStrig());
+        System.out.println();
     }
 
     private static List<Integer> multiplyProgram_0(int a, int b) {

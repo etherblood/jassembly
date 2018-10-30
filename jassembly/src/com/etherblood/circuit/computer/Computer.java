@@ -53,15 +53,14 @@ public class Computer {
     public Computer(int width, List<Integer> program) {
         assert Integer.bitCount(width) == 1;
         int depth = log2nlz(width);
+        int registersAddressWidth = ControlSignals.R0_ADR.length;
+        int operatorsAddressWidth = ControlSignals.OP_ADR.length;
         ModuleFactory factory = new ModuleFactory();
 
         ram = factory.ram(width);
         adder = factory.rippleCarryAdder(width);
         rshift = factory.logicalRightShift(width, depth);
         lu = factory.logicUnit(width);
-
-        command = factory.msFlipFlop(width);
-        commandMux = factory.multiplexer(width);
 
         noop = factory.noop(width + 1, width);
         acc = factory.msFlipFlop(width);
@@ -72,9 +71,9 @@ public class Computer {
         pc = factory.msFlipFlop(width);
         pcInc = factory.incrementer(width);
         pcMux = factory.multiplexer(width);
-
-        int registersAddressWidth = ControlSignals.R0_ADR.length;
-        int operatorsAddressWidth = ControlSignals.OP_ADR.length;
+        command = factory.msFlipFlop(width);
+        commandMux = factory.multiplexer(width);
+        commandDecodeMux = factory.multiplexer(ControlSignals.SIGNAL_BITS, width);
 
         busMuxRead0 = factory.multiplexer(width, registersAddressWidth);
         busDemuxRead0 = factory.demultiplexer(width, operatorsAddressWidth);
@@ -83,10 +82,8 @@ public class Computer {
         busMuxWrite = factory.multiplexer(width, operatorsAddressWidth);
         busDemuxWrite = factory.demultiplexer(width + 1, registersAddressWidth);
         opArgDemux = factory.demultiplexer(ControlSignals.OP_ARG.length, operatorsAddressWidth);
-
         modRead0 = factory.signalModifier(width);
         modWrite = factory.signalModifier(width);
-        commandDecodeMux = factory.multiplexer(ControlSignals.SIGNAL_BITS, width);
 
         for (int i = 0; i < 1 << width; i++) {
             ram.getSignals().subRange(i * width, width).set(Command.WAIT.ordinal());
@@ -97,15 +94,12 @@ public class Computer {
         }
         command.getSignals().set(Command.LOAD_CMD.ordinal());
 
+        //TODO: below is workaround for stability issues...
         Engine engine = new Engine();
         quiet(engine);
-
         connectWires(width, depth);
-        
         engine.activate(clockWire);
-        while (engine.isActive()) {
-            engine.tick();
-        }
+        quiet(engine);
     }
 
     private void connectWires(int width, int depth) {
@@ -150,7 +144,7 @@ public class Computer {
             outBus(rshift, 0, width),
             outBus(lu, 0, width)
         };
-        
+
         List<WireReference> controlSignals = new ArrayList<>();
         controlSignals.add(pcInc.getIn(width));
         controlSignals.addAll(inBus(busMuxRead0, (1 << ControlSignals.R0_ADR.length) * width, registersAddressWidth));
@@ -165,12 +159,11 @@ public class Computer {
         controlSignals.addAll(inBus(modRead0, width, ControlSignals.R0_MOD.length));
         controlSignals.addAll(inBus(modWrite, width, ControlSignals.W_MOD.length));
         assert controlSignals.size() == ControlSignals.SIGNAL_BITS;
-        
-        
+
         adder.getIn(2 * width).setWire(opArgDemux.getOut(ControlSignals.ADD_ADR * ControlSignals.OP_ARG.length));
         lu.getIn(2 * width).setWire(opArgDemux.getOut(ControlSignals.LU_ADR * ControlSignals.OP_ARG.length));
         lu.getIn(2 * width + 1).setWire(opArgDemux.getOut(ControlSignals.LU_ADR * ControlSignals.OP_ARG.length + 1));
-        
+
         connect(commandMux, 0, command, 0, width);
         setInput(commandMux, 0, width, Command.LOAD_CMD.ordinal());
         connect(pcInc, 0, pc, 0, width);
@@ -245,7 +238,7 @@ public class Computer {
         engine.activate(quiet(lu).getGates());
         engine.activate(quiet(opArgDemux).getGates());
     }
-    
+
     private static <T extends SimpleModule> T quiet(T mod) {//probably obsolete?
         //workaround for potentially unstable initial values
         Engine engine = new Engine();
