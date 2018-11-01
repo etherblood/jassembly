@@ -1,7 +1,6 @@
 package com.etherblood.circuit.core;
 
 import com.etherblood.circuit.core.collections.FastArrayList;
-import com.etherblood.circuit.core.collections.FastVersionedSet;
 
 /**
  *
@@ -9,28 +8,37 @@ import com.etherblood.circuit.core.collections.FastVersionedSet;
  */
 public class Engine {
 
-    private final FastVersionedSet<BinaryGate> gates;
-    private final FastArrayList<Wire> wires;
-
-    public Engine() {
-        this.wires = new FastArrayList<>();
-        this.gates = new FastVersionedSet<>(BinaryGate::getId);
-    }
+    private final FastArrayList<BinaryGate[]> gates = new FastArrayList<>();
+    private final FastArrayList<Wire> trues = new FastArrayList<>(), falses = new FastArrayList<>();
 
     public void tick() {
-        for (BinaryGate gate : gates) {//can be parallel (make collections concurrent)
-            gate.compute();
-            Wire out = gate.getOut();
-            if (out.requiresUpdate()) {
-                wires.add(out);
+        for (BinaryGate[] arr : gates) { //can be parallel (make collections concurrent)
+            for (BinaryGate gate : arr) {
+                boolean value = gate.compute();
+                if (value) {
+                    trues.add(gate.getOut());
+                } else {
+                    falses.add(gate.getOut());
+                }
             }
         }
         gates.clear();
-        for (Wire wire : wires) {//can be parallel (make collections concurrent)
-            wire.update();
-            activate(wire.childs());
+
+        for (Wire wire : trues) {//can be parallel (make collections concurrent)
+            if (!wire.getSignal()) {
+                wire.setSignal(true);
+                gates.add(wire.childs());
+            }
         }
-        wires.clear();
+        trues.clear();
+
+        for (Wire wire : falses) {//can be parallel (make collections concurrent)
+            if (wire.getSignal()) {
+                wire.setSignal(false);
+                gates.add(wire.childs());
+            }
+        }
+        falses.clear();
     }
 
     public boolean isActive() {
@@ -38,15 +46,7 @@ public class Engine {
     }
 
     public void activate(BinaryGate... gates) {
-        for (BinaryGate gate : gates) {
-            this.gates.add(gate);
-        }
-    }
-
-    public void activate(Iterable<BinaryGate> gates) {
-        for (BinaryGate gate : gates) {
-            this.gates.add(gate);
-        }
+        this.gates.add(gates);
     }
 
     public void activate(Wire... wires) {

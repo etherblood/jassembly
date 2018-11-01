@@ -11,7 +11,6 @@ public class Wire implements HasSignal {
 
     public static final int MAX_CHILDS = 64;
     private boolean signal;
-    private boolean scheduledSignal;
     private BinaryGate parent;
     private BinaryGate[] childs = {};
 
@@ -22,7 +21,6 @@ public class Wire implements HasSignal {
     Wire(BinaryGate parent, boolean signal) {
         this.parent = parent;
         this.signal = signal;
-        this.scheduledSignal = signal;
     }
 
     @Override
@@ -35,10 +33,6 @@ public class Wire implements HasSignal {
         this.signal = signal;
     }
 
-    public void scheduleSignal(boolean signal) {
-        scheduledSignal = signal;
-    }
-
     BinaryGate[] childs() {
         return childs;
     }
@@ -49,14 +43,6 @@ public class Wire implements HasSignal {
 
     void setParent(BinaryGate parent) {
         this.parent = parent;
-    }
-
-    boolean requiresUpdate() {
-        return signal != scheduledSignal;
-    }
-
-    void update() {
-        signal = scheduledSignal;
     }
 
     void attachChild(BinaryGate child) {
