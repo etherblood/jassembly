@@ -21,7 +21,6 @@ public abstract class BinaryGate {
         if (a != b) {
             b.attachChild(this);
         }
-        out.setParent(this);
     }
 
     boolean compute() {

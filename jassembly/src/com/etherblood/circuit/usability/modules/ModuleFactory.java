@@ -268,9 +268,14 @@ public class ModuleFactory {
                 concat(master.getGates(), slave.getGates(), not.getGates()),
                 slave.getOutputs());
     }
-
+    
     public MemoryModule ram(int width) {
-        int words = 1 << width;
+        return ram(width, Integer.MAX_VALUE);
+    }
+
+    public MemoryModule ram(int width, int maxWords) {
+        int addressSpace = 1 << width;
+        int words = Math.min(maxWords, addressSpace);
         SimpleModule demux = demultiplexer(width + 1, width);
         SimpleModule mux = multiplexer(width, width);
 
@@ -295,7 +300,7 @@ public class ModuleFactory {
             gates.addAll(Arrays.asList(dFlipFlop.getGates()));
         }
         for (int bit = 0; bit < width; bit++) {
-            address[bit] = combine(mux.getIn(words * width + bit), demux.getIn(width + 1 + bit));
+            address[bit] = combine(mux.getIn(addressSpace * width + bit), demux.getIn(width + 1 + bit));
         }
 
         return new MemoryModule(

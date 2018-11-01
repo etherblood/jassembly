@@ -15,6 +15,10 @@ public class Engine {
         for (BinaryGate[] arr : gates) { //can be parallel (make collections concurrent)
             for (BinaryGate gate : arr) {
                 boolean value = gate.compute();
+                if (value == gate.getOut().getSignal()) {
+//                    early exit
+                    continue;
+                }
                 if (value) {
                     trues.add(gate.getOut());
                 } else {

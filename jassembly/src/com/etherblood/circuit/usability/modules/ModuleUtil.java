@@ -3,9 +3,7 @@ package com.etherblood.circuit.usability.modules;
 import com.etherblood.circuit.core.BinaryGate;
 import com.etherblood.circuit.core.Wire;
 import com.etherblood.circuit.usability.signals.WireReference;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.function.IntFunction;
 
 /**
  *
@@ -48,7 +46,7 @@ public class ModuleUtil {
             public Wire getWire() {
                 Wire wire = consumers[0].getWire();
                 for (WireReference consumer : consumers) {
-                    assert consumer.getWire() == wire: "Tried to set wire value before initialization.";
+                    assert consumer.getWire() == wire : "Tried to set wire value before initialization.";
                 }
                 return wire;
             }
@@ -62,28 +60,30 @@ public class ModuleUtil {
         };
     }
 
-    public static Wire[] concat(Wire[]... a) {
-        List<Wire> list = new ArrayList<>();
-        for (Wire[] wires : a) {
-            list.addAll(Arrays.asList(wires));
-        }
-        return list.toArray(new Wire[list.size()]);
+    public static Wire[] concat(Wire[]... arrays) {
+        return concat(Wire[]::new, arrays);
     }
 
-    public static BinaryGate[] concat(BinaryGate[]... a) {
-        List<BinaryGate> list = new ArrayList<>();
-        for (BinaryGate[] gates : a) {
-            list.addAll(Arrays.asList(gates));
-        }
-        return list.toArray(new BinaryGate[list.size()]);
+    public static BinaryGate[] concat(BinaryGate[]... arrays) {
+        return concat(BinaryGate[]::new, arrays);
     }
 
-    public static WireReference[] concat(WireReference[]... a) {
-        List<WireReference> list = new ArrayList<>();
-        for (WireReference[] consumers : a) {
-            list.addAll(Arrays.asList(consumers));
+    public static WireReference[] concat(WireReference[]... arrays) {
+        return concat(WireReference[]::new, arrays);
+    }
+
+    private static <T> T[] concat(IntFunction<T[]> constructor, T[]... arrays) {
+        int length = 0;
+        for (T[] array : arrays) {
+            length += array.length;
         }
-        return list.toArray(new WireReference[list.size()]);
+        T[] result = constructor.apply(length);
+        int index = 0;
+        for (T[] array : arrays) {
+            System.arraycopy(array, 0, result, index, array.length);
+            index += array.length;
+        }
+        return result;
     }
 
     @SafeVarargs

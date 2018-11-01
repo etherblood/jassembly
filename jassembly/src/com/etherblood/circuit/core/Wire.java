@@ -10,16 +10,11 @@ import java.util.Arrays;
 public class Wire implements HasSignal {
 
     public static final int MAX_CHILDS = 64;
+    private static final BinaryGate[] EMPTY = {};
     private boolean signal;
-    private BinaryGate parent;
-    private BinaryGate[] childs = {};
+    private BinaryGate[] childs = EMPTY;
 
     Wire(boolean signal) {
-        this(null, signal);
-    }
-
-    Wire(BinaryGate parent, boolean signal) {
-        this.parent = parent;
         this.signal = signal;
     }
 
@@ -37,14 +32,6 @@ public class Wire implements HasSignal {
         return childs;
     }
 
-    BinaryGate parent() {
-        return parent;
-    }
-
-    void setParent(BinaryGate parent) {
-        this.parent = parent;
-    }
-
     void attachChild(BinaryGate child) {
         if (childs.length >= MAX_CHILDS) {
             throw new UnsupportedOperationException("Gate cannot have more than " + MAX_CHILDS + " children.");
@@ -54,8 +41,7 @@ public class Wire implements HasSignal {
 
     private void addChild(BinaryGate child) {
         assert !Arrays.asList(childs).contains(child);
-        BinaryGate[] newChilds = new BinaryGate[childs.length + 1];
-        System.arraycopy(childs, 0, newChilds, 0, childs.length);
+        BinaryGate[] newChilds = Arrays.copyOf(childs, childs.length + 1);
         newChilds[childs.length] = child;
         childs = newChilds;
     }
