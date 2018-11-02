@@ -59,6 +59,18 @@ public class ModuleUtil {
             }
         };
     }
+    
+    public static Wire merge(Wire source, Wire target) {
+        for (BinaryGate child : target.childs()) {
+            if(child.getA() == target) {
+                child.setA(source);
+            }
+            if(child.getB() == target) {
+                child.setB(source);
+            }
+        }
+        return source;
+    }
 
     public static Wire[] concat(Wire[]... arrays) {
         return concat(Wire[]::new, arrays);

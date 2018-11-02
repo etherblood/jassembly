@@ -28,7 +28,7 @@ public class Wire implements HasSignal {
         this.signal = signal;
     }
 
-    BinaryGate[] childs() {
+    public BinaryGate[] childs() {
         return childs;
     }
 
@@ -67,17 +67,5 @@ public class Wire implements HasSignal {
 
     public static Wire instance(boolean signal) {
         return new Wire(signal);
-    }
-    
-    public static Wire merge(Wire source, Wire target) {
-        for (BinaryGate child : target.childs()) {
-            if(child.getA() == target) {
-                child.setA(source);
-            }
-            if(child.getB() == target) {
-                child.setB(source);
-            }
-        }
-        return source;
     }
 }

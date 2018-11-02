@@ -12,23 +12,22 @@ public class Engine {
     private final FastArrayList<Wire> trues = new FastArrayList<>(), falses = new FastArrayList<>();
 
     public void tick() {
-        for (BinaryGate[] arr : gates) { //can be parallel (make collections concurrent)
+        for (BinaryGate[] arr : gates) {
             for (BinaryGate gate : arr) {
-                boolean value = gate.compute();
-                if (value == gate.getOut().getSignal()) {
-//                    early exit
-                    continue;
-                }
-                if (value) {
-                    trues.add(gate.getOut());
-                } else {
-                    falses.add(gate.getOut());
+                boolean currentSignal = gate.getOut().getSignal();
+                boolean nextSignal = gate.compute();
+                if (nextSignal != currentSignal) {
+                    if (nextSignal) {
+                        trues.add(gate.getOut());
+                    } else {
+                        falses.add(gate.getOut());
+                    }
                 }
             }
         }
         gates.clear();
 
-        for (Wire wire : trues) {//can be parallel (make collections concurrent)
+        for (Wire wire : trues) {
             if (!wire.getSignal()) {
                 wire.setSignal(true);
                 gates.add(wire.childs());
@@ -36,7 +35,7 @@ public class Engine {
         }
         trues.clear();
 
-        for (Wire wire : falses) {//can be parallel (make collections concurrent)
+        for (Wire wire : falses) {
             if (wire.getSignal()) {
                 wire.setSignal(false);
                 gates.add(wire.childs());

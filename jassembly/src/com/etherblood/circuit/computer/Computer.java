@@ -50,14 +50,14 @@ public class Computer {
 
     public final Wire clockWire = Wire.off();
 
-    public Computer(int width, List<Integer> program) {
+    public Computer(int width, List<Integer> program, int maxRam) {
         assert Integer.bitCount(width) == 1;
         int depth = log2nlz(width);
         int registersAddressWidth = ControlSignals.R0_ADR.length;
         int operatorsAddressWidth = ControlSignals.OP_ADR.length;
         ModuleFactory factory = new ModuleFactory();
 
-        ram = factory.ram(width);
+        ram = factory.ram(width, maxRam);
         adder = factory.rippleCarryAdder(width);
         rshift = factory.logicalRightShift(width, depth);
         lu = factory.logicUnit(width);
@@ -85,7 +85,7 @@ public class Computer {
         modRead0 = factory.signalModifier(width);
         modWrite = factory.signalModifier(width);
 
-        for (int i = 0; i < 1 << width; i++) {
+        for (int i = 0; i < ram.getSignals().size() / width; i++) {
             ram.getSignals().subRange(i * width, width).set(Command.WAIT.ordinal());
         }
         int nextLine = 0;

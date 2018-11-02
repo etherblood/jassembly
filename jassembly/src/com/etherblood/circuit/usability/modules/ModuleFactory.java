@@ -359,17 +359,18 @@ public class ModuleFactory {
     }
 
     public SimpleModule multiplexer() {
-        SimpleModule a = and();
-        SimpleModule b = and();
-        SimpleModule or = or();
+        NandGate nandA = new NandGate();
+        NandGate nandB = new NandGate();
+        NandGate nand = new NandGate();
         SimpleModule not = not();
-        a.getIn(1).setWire(not.getOut(0));
-        or.getIn(0).setWire(a.getOut(0));
-        or.getIn(1).setWire(b.getOut(0));
+        
+        nandA.setB(not.getOut(0));
+        nand.setA(nandA.getOut());
+        nand.setB(nandB.getOut());
         return new SimpleModule(
-                array(a.getIn(0), b.getIn(0), combine(not.getIn(0), b.getIn(1))),
-                concat(a.getGates(), b.getGates(), or.getGates(), not.getGates()),
-                array(or.getOut(0)));
+                array(inA(nandA), inA(nandB), combine(not.getIn(0), inB(nandB))),
+                concat(array(nandA, nandB, nand), not.getGates()),
+                array(nand.getOut()));
     }
 
     public SimpleModule demultiplexer(int width, int depth) {

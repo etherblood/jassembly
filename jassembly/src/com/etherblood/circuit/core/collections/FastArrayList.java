@@ -2,6 +2,7 @@ package com.etherblood.circuit.core.collections;
 
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.stream.Stream;
 
 /**
  *
@@ -47,5 +48,9 @@ public class FastArrayList<T> implements Iterable<T> {
                 return data[current++];
             }
         };
+    }
+    
+    public Stream<T> stream() {
+        return Arrays.stream(data, 0, count);
     }
 }

@@ -41,7 +41,7 @@ public class Main {
         List<Integer> program_1 = multiplyProgram_1(a, b);
 
         int width = 8;
-        Computer computer = new Computer(width, program_0);
+        Computer computer = new Computer(width, program_0, 100);
         Engine engine = new Engine();
         while (computer.command.getSignals().getAsLong() != Command.TERMINATE.ordinal()) {
             advanceCycle(computer, engine);
