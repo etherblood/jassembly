@@ -40,7 +40,7 @@ public class Main {
         List<Integer> program_0 = multiplyProgram_0(a, b);
         List<Integer> program_1 = multiplyProgram_1(a, b);
 
-        int width = 8;
+        int width = 16;
         Computer computer = new Computer(width, program_0, 100);
         Engine engine = new Engine();
         while (computer.command.getSignals().getAsLong() != Command.TERMINATE.ordinal()) {

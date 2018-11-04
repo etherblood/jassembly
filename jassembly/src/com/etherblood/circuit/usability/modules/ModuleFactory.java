@@ -5,6 +5,8 @@ import com.etherblood.circuit.core.BinaryGate;
 import com.etherblood.circuit.core.Engine;
 import com.etherblood.circuit.core.NandGate;
 import com.etherblood.circuit.core.Wire;
+import com.etherblood.circuit.usability.BusUtil;
+import com.etherblood.circuit.usability.Util;
 import com.etherblood.circuit.usability.signals.HasSignal;
 import com.etherblood.circuit.usability.signals.SignalRange;
 import com.etherblood.circuit.usability.signals.WireReference;
@@ -270,14 +272,12 @@ public class ModuleFactory {
     }
     
     public MemoryModule ram(int width) {
-        return ram(width, Integer.MAX_VALUE);
+        return ram(width, 1 << width);
     }
 
-    public MemoryModule ram(int width, int maxWords) {
-        int addressSpace = 1 << width;
-        int words = Math.min(maxWords, addressSpace);
-        SimpleModule demux = demultiplexer(width + 1, width);
-        SimpleModule mux = multiplexer(width, width);
+    public MemoryModule ram(int width, int words) {
+        SimpleModule demux = demux(width + 1, words);
+        SimpleModule mux = mux(width, words);
 
         //TODO: fix
         Engine engine = new Engine();
@@ -299,14 +299,44 @@ public class ModuleFactory {
             dFlipFlop.getIn(width).setWire(demux.getOut(word * (width + 1) + width));
             gates.addAll(Arrays.asList(dFlipFlop.getGates()));
         }
-        for (int bit = 0; bit < width; bit++) {
-            address[bit] = combine(mux.getIn(addressSpace * width + bit), demux.getIn(width + 1 + bit));
+        for (int bit = 0; bit < address.length; bit++) {
+            if(bit < Util.ceilLog(words)) {
+                address[bit] = combine(mux.getIn(words * width + bit), demux.getIn(width + 1 + bit));
+            } else {
+                address[bit] = inA(new NandGate());//TODO: remove unused inputs
+            }
         }
-
         return new MemoryModule(
                 new SignalRange(signals),
                 concat(Arrays.copyOf(demux.getInputs(), width), address, array(demux.getIn(width))),
                 concat(demux.getGates(), mux.getGates(), gates.toArray(new BinaryGate[gates.size()])),
+                mux.getOutputs());
+    }
+    
+    public SimpleModule mux(int width, int words) {
+        if(words <= 2) {
+            return multiplexer(width);
+        }
+        int aDepth = (Util.ceilLog(words) - 1);
+        int aWords = 1 << aDepth;
+        int bWords = words - aWords;
+        SimpleModule muxA = multiplexer(width, aDepth);
+        SimpleModule muxB = aWords == bWords? multiplexer(width, aDepth): mux(width, bWords);
+        SimpleModule mux = multiplexer(width);
+        
+        WireReference[] input = new WireReference[Util.ceilLog(aWords)];
+        for (int i = 0; i < Util.ceilLog(aWords); i++) {
+            if(i < Util.ceilLog(bWords)) {
+                input[i] = combine(muxA.getIn(width * aWords + i), muxB.getIn(width * bWords + i));
+            } else {
+                input[i] = muxA.getIn(width * aWords + i);
+            }
+        }
+        BusUtil.connect(muxA, 0, mux, 0, width);
+        BusUtil.connect(muxB, 0, mux, width, width);
+        return new SimpleModule(
+                concat(Arrays.copyOf(muxA.getInputs(), aWords * width), Arrays.copyOf(muxB.getInputs(), bWords * width), input, array(mux.getIn(2 * width))),
+                concat(mux.getGates(), muxA.getGates(), muxB.getGates()),
                 mux.getOutputs());
     }
 
@@ -371,6 +401,34 @@ public class ModuleFactory {
                 array(inA(nandA), inA(nandB), combine(not.getIn(0), inB(nandB))),
                 concat(array(nandA, nandB, nand), not.getGates()),
                 array(nand.getOut()));
+    }
+    
+    public SimpleModule demux(int width, int words) {
+        if(words <= 2) {
+            return demultiplexer(width);
+        }
+        int aDepth = (Util.ceilLog(words) - 1);
+        int aWords = 1 << aDepth;
+        int bWords = words - aWords;
+        SimpleModule demuxA = demultiplexer(width, aDepth);
+        SimpleModule demuxB = aWords == bWords? demultiplexer(width, aDepth): demux(width, bWords);
+        SimpleModule demux = demultiplexer(width);
+        
+        WireReference[] input = new WireReference[Util.ceilLog(aWords)];
+        for (int i = 0; i < Util.ceilLog(aWords); i++) {
+            if(i < Util.ceilLog(bWords)) {
+                input[i] = combine(demuxA.getIn(width + i), demuxB.getIn(width + i));
+            } else {
+                input[i] = demuxA.getIn(width + i);
+            }
+        }
+        
+        BusUtil.connect(demux, 0, demuxA, 0, width);
+        BusUtil.connect(demux, width, demuxB, 0, width);
+        return new SimpleModule(
+                concat(Arrays.copyOf(demux.getInputs(), width), input, array(demux.getIn(width))),
+                concat(demux.getGates(), demuxA.getGates(), demuxB.getGates()),
+                concat(Arrays.copyOf(demuxA.getOutputs(), width * aWords), Arrays.copyOf(demuxB.getOutputs(), width * bWords)));
     }
 
     public SimpleModule demultiplexer(int width, int depth) {

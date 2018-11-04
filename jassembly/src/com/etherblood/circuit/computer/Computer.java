@@ -3,11 +3,11 @@ package com.etherblood.circuit.computer;
 import com.etherblood.circuit.core.Engine;
 import static com.etherblood.circuit.usability.BusUtil.*;
 import com.etherblood.circuit.core.Wire;
+import com.etherblood.circuit.usability.Util;
 import com.etherblood.circuit.usability.codes.Command;
 import com.etherblood.circuit.usability.codes.ControlSignals;
 import com.etherblood.circuit.usability.modules.MemoryModule;
 import com.etherblood.circuit.usability.modules.ModuleFactory;
-import com.etherblood.circuit.usability.modules.ModuleUtil;
 import com.etherblood.circuit.usability.modules.SimpleModule;
 import com.etherblood.circuit.usability.signals.WireReference;
 import java.util.ArrayList;
@@ -52,7 +52,7 @@ public class Computer {
 
     public Computer(int width, List<Integer> program, int maxRam) {
         assert Integer.bitCount(width) == 1;
-        int depth = log2nlz(width);
+        int depth = Util.floorLog(width);
         int registersAddressWidth = ControlSignals.R0_ADR.length;
         int operatorsAddressWidth = ControlSignals.OP_ADR.length;
         ModuleFactory factory = new ModuleFactory();
@@ -73,7 +73,7 @@ public class Computer {
         pcMux = factory.multiplexer(width);
         command = factory.msFlipFlop(width);
         commandMux = factory.multiplexer(width);
-        commandDecodeMux = factory.multiplexer(ControlSignals.SIGNAL_BITS, width);
+        commandDecodeMux = factory.mux(ControlSignals.SIGNAL_BITS, Command.values().length);
 
         busMuxRead0 = factory.multiplexer(width, registersAddressWidth);
         busDemuxRead0 = factory.demultiplexer(width, operatorsAddressWidth);
@@ -198,12 +198,12 @@ public class Computer {
             connect(operator, inBus(busMuxWrite, i * width, operator.size()));
         }
 
-        connect(command, 0, commandDecodeMux, (1 << width) * ControlSignals.SIGNAL_BITS, width);
+        connect(command, 0, commandDecodeMux, commands.length * ControlSignals.SIGNAL_BITS, Util.ceilLog(commands.length));
         for (int i = 0; i < controlSignals.size(); i++) {
             controlSignals.get(i).setWire(commandDecodeMux.getOut(i));
         }
-        for (int i = 0; i < 1 << width; i++) {
-            Command cmd = i < commands.length ? commands[i] : Command.UNDEFINED;
+        for (int i = 0; i < commands.length; i++) {
+            Command cmd = commands[i];
             setInput(commandDecodeMux, i * ControlSignals.SIGNAL_BITS, ControlSignals.SIGNAL_BITS, cmd.getControlSignals());
         }
 
@@ -247,12 +247,5 @@ public class Computer {
             engine.tick();
         }
         return mod;
-    }
-
-    private static int log2nlz(int bits) {
-        if (bits == 0) {
-            return 0; // or throw exception
-        }
-        return 31 - Integer.numberOfLeadingZeros(bits);
     }
 }

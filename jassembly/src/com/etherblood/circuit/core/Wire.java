@@ -9,7 +9,7 @@ import java.util.Arrays;
  */
 public class Wire implements HasSignal {
 
-    public static final int MAX_CHILDS = 64;
+    public static final int MAX_CHILDS = 256;
     private static final BinaryGate[] EMPTY = {};
     private boolean signal;
     private BinaryGate[] childs = EMPTY;

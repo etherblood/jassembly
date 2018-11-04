@@ -3,8 +3,11 @@ package com.etherblood.circuit.usability.modules;
 import com.etherblood.circuit.usability.signals.WireReference;
 import com.etherblood.circuit.core.Engine;
 import com.etherblood.circuit.core.Wire;
+import com.etherblood.circuit.usability.BusUtil;
+import com.etherblood.circuit.usability.Util;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -27,21 +30,21 @@ public class ModuleFactoryTest {
         int b = 3;
         setInput(lu, 0, width, a);
         setInput(lu, width, width, b);
-        
+
         setInput(lu, 2 * width, 2, 0);
         compute(lu);
         assertEquals(a & b, getOutput(lu, 0, width));
-        
+
         setInput(lu, 2 * width, 2, 1);
         compute(lu);
         assertEquals(a | b, getOutput(lu, 0, width));
-        
+
         setInput(lu, 2 * width, 2, 2);
         compute(lu);
         assertEquals(a ^ b, getOutput(lu, 0, width));
-        
+
     }
-    
+
     @Test
     public void logicalRightShift() {
         int depth = 3;
@@ -309,6 +312,28 @@ public class ModuleFactoryTest {
     }
 
     @Test
+    public void mux() {
+        int width = 8;
+        int words = 5;
+        int depth = Util.ceilLog(words);
+        SimpleModule multiplexer = factory.mux(width, words);
+        assertEquals(width * words + depth, multiplexer.inputCount());
+        assertEquals(width, multiplexer.outputCount());
+        Random random = new Random(3);
+        int[] data = new int[words];
+        for (int signal = 0; signal < words; signal++) {
+            data[signal] = random.nextInt(1 << width);
+            BusUtil.setInput(multiplexer, signal * width, width, data[signal]);
+        }
+        for (int signal = 0; signal < words; signal++) {
+            BusUtil.setInput(multiplexer, words * width, depth, signal);
+            compute(multiplexer);
+            long output = BusUtil.getOutput(multiplexer, 0, width);
+            assertEquals(data[signal], output);
+        }
+    }
+
+    @Test
     public void multiplexer() {
         SimpleModule multiplexer = factory.multiplexer();
         assertEquals(3, multiplexer.inputCount());
@@ -322,6 +347,31 @@ public class ModuleFactoryTest {
         multiplexer.getIn(2).setWire(Wire.on());
         compute(multiplexer);
         assertFalse(multiplexer.getOut(0).getSignal());
+    }
+
+    @Test
+    public void demux() {
+        int width = 8;
+        int words = 5;
+        int depth = Util.ceilLog(words);
+        SimpleModule demultiplexer = factory.demux(width, words);
+        assertEquals(width + depth, demultiplexer.inputCount());
+        assertEquals(width * words, demultiplexer.outputCount());
+        int data = 137;
+        for (int signal = 0; signal < words; signal++) {
+            BusUtil.setInput(demultiplexer, 0, width, data);
+            BusUtil.setInput(demultiplexer, width, depth, signal);
+            compute(demultiplexer);
+            for (int word = 0; word < words; word++) {
+                long output = BusUtil.getOutput(demultiplexer, word * width, width);
+                if (word == signal) {
+                    assertEquals(data, output);
+                } else {
+                    assertEquals(0, output);
+                }
+            }
+
+        }
     }
 
     @Test
