@@ -11,6 +11,8 @@ public enum TokenType {
     OPEN_BRACE("\\{"),
     CLOSE_BRACE("\\}"),
     SEMICOLON(";"),
+    NEGATION("-"),
+    COMPLEMENT("~"),
     KEYWORD_RETURN("return"),
     KEYWORD_INT("int"),
     LITERAL_INT("[0-9]+"),

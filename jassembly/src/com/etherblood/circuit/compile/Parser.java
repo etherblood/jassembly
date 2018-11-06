@@ -1,11 +1,14 @@
 package com.etherblood.circuit.compile;
 
-import com.etherblood.circuit.compile.ast.Constant;
+import com.etherblood.circuit.compile.ast.expressions.Constant;
 import com.etherblood.circuit.compile.ast.FunctionDeclaration;
 import com.etherblood.circuit.compile.ast.Program;
 import com.etherblood.circuit.compile.ast.ReturnStatement;
+import com.etherblood.circuit.compile.ast.expressions.Expression;
+import com.etherblood.circuit.compile.ast.expressions.UnaryOperation;
 import com.etherblood.circuit.compile.tokens.Token;
 import com.etherblood.circuit.compile.tokens.TokenType;
+import java.util.Arrays;
 import java.util.Iterator;
 
 /**
@@ -30,15 +33,21 @@ public class Parser {
 
     public ReturnStatement parseStatement(Iterator<Token> tokens) {
         consume(tokens, TokenType.KEYWORD_RETURN);
-        Constant expression = parseExpression(tokens);
+        Expression expression = parseExpression(tokens);
         consume(tokens, TokenType.SEMICOLON);
         return new ReturnStatement(expression);
     }
 
-    public Constant parseExpression(Iterator<Token> tokens) {
+    public Expression parseExpression(Iterator<Token> tokens) {
         Token token = tokens.next();
-        assertTokenType(token, TokenType.LITERAL_INT);
-        return new Constant(Integer.valueOf(token.getValue()));
+        if (token.getType() == TokenType.LITERAL_INT) {
+            return new Constant(Integer.valueOf(token.getValue()));
+        } else if (Arrays.asList(TokenType.COMPLEMENT, TokenType.NEGATION).contains(token.getType())) {
+            Expression innerExpression = parseExpression(tokens);
+            return new UnaryOperation(token.getType(), innerExpression);
+        } else {
+            throw new IllegalArgumentException("Unexpected token " + token);
+        }
     }
 
     private void consume(Iterator<Token> tokens, TokenType... types) {

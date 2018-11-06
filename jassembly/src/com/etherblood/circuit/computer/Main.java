@@ -43,7 +43,7 @@ public class Main {
         
         
         String sampleCode = "int main() {\n"
-                + "    return 2;\n"
+                + "    return -~2;\n"
                 + "}";
         List<Integer> program_2 = new SimpleCompiler().compile(sampleCode);
 
@@ -72,13 +72,13 @@ public class Main {
     private static void printState(Computer computer) {
         SignalRange currentCommand = computer.command.getSignals();
         System.out.println("ram: " + computer.ram.getSignals().toHexStrig());
-        System.out.println("pc: " + computer.pc.getSignals().toHexStrig());
+        System.out.println("pc: " + computer.pc.getSignals().toHexStrig() + " (" + computer.pc.getSignals().getAsLong() + ")");
         System.out.println("cmd: " + currentCommand.toHexStrig() + " (" + Command.values()[(int) currentCommand.getAsLong()] + ")");
-        System.out.println("ac: " + computer.acc.getSignals().toHexStrig());
-        System.out.println("x0: " + computer.x0.getSignals().toHexStrig());
-        System.out.println("x1: " + computer.x1.getSignals().toHexStrig());
-        System.out.println("x2: " + computer.x2.getSignals().toHexStrig());
-        System.out.println("x3: " + computer.x3.getSignals().toHexStrig());
+        System.out.println("ac: " + computer.acc.getSignals().toHexStrig() + " (" + computer.acc.getSignals().getAsLong() + ")");
+        System.out.println("x0: " + computer.x0.getSignals().toHexStrig() + " (" + computer.x0.getSignals().getAsLong() + ")");
+        System.out.println("x1: " + computer.x1.getSignals().toHexStrig() + " (" + computer.x1.getSignals().getAsLong() + ")");
+        System.out.println("x2: " + computer.x2.getSignals().toHexStrig() + " (" + computer.x2.getSignals().getAsLong() + ")");
+        System.out.println("x3: " + computer.x3.getSignals().toHexStrig() + " (" + computer.x3.getSignals().getAsLong() + ")");
         System.out.println();
     }
 

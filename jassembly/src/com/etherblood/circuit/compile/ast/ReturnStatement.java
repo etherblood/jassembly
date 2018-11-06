@@ -1,18 +1,20 @@
 package com.etherblood.circuit.compile.ast;
 
+import com.etherblood.circuit.compile.ast.expressions.Expression;
+
 /**
  *
  * @author Philipp
  */
 public class ReturnStatement {
 
-    private final Constant constant;
+    private final Expression expression;
 
-    public ReturnStatement(Constant constant) {
-        this.constant = constant;
+    public ReturnStatement(Expression expression) {
+        this.expression = expression;
     }
 
-    public Constant getConstant() {
-        return constant;
+    public Expression getExpression() {
+        return expression;
     }
 }

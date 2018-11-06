@@ -1,10 +1,10 @@
-package com.etherblood.circuit.compile.ast;
+package com.etherblood.circuit.compile.ast.expressions;
 
 /**
  *
  * @author Philipp
  */
-public class Constant {
+public class Constant implements Expression {
 
     private final int value;
 
