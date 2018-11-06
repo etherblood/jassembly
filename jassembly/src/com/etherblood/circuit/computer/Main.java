@@ -1,5 +1,6 @@
 package com.etherblood.circuit.computer;
 
+import com.etherblood.circuit.compile.SimpleCompiler;
 import com.etherblood.circuit.core.Engine;
 import com.etherblood.circuit.usability.signals.SignalRange;
 import com.etherblood.circuit.usability.codes.Command;
@@ -39,9 +40,15 @@ public class Main {
         //program above is encoded in methods below
         List<Integer> program_0 = multiplyProgram_0(a, b);
         List<Integer> program_1 = multiplyProgram_1(a, b);
+        
+        
+        String sampleCode = "int main() {\n"
+                + "    return 2;\n"
+                + "}";
+        List<Integer> program_2 = new SimpleCompiler().compile(sampleCode);
 
         int width = 16;
-        Computer computer = new Computer(width, program_0, 100);
+        Computer computer = new Computer(width, program_2, 100);
         Engine engine = new Engine();
         while (computer.command.getSignals().getAsLong() != Command.TERMINATE.ordinal()) {
             advanceCycle(computer, engine);
