@@ -11,8 +11,17 @@ public enum TokenType {
     OPEN_BRACE("\\{"),
     CLOSE_BRACE("\\}"),
     SEMICOLON(";"),
-    NEGATION("-"),
-    COMPLEMENT("~"),
+    OP_COMPLEMENT("~"),
+    OP_MINUS("-"),
+    OP_PLUS("\\+"),
+    OP_MULTIPLY("\\*"),
+    OP_DIVIDE("/"),
+    OP_REMAINDER("%"),
+    OP_ALL("&&"),
+    OP_ANY("\\|\\|"),
+    OP_AND("&"),
+    OP_OR("\\|"),
+    OP_XOR("\\^"),
     KEYWORD_RETURN("return"),
     KEYWORD_INT("int"),
     LITERAL_INT("[0-9]+"),
@@ -26,9 +35,5 @@ public enum TokenType {
 
     public String pattern() {
         return pattern;
-    }
-    
-    public String group() {
-        return name().replaceAll("_", "");
     }
 }

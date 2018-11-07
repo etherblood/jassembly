@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
  */
 public class Lexer {
 
-    private static final Pattern REGEX = Pattern.compile(Arrays.stream(TokenType.values()).map(x -> String.format("(?<%s>%s)", x.group(), x.pattern())).collect(Collectors.joining("|")));
+    private static final Pattern REGEX = Pattern.compile(Arrays.stream(TokenType.values()).map(x -> String.format("(%s)", x.pattern())).collect(Collectors.joining("|")));
 
     public List<Token> tokenify(String code) {
         List<Token> tokens = new ArrayList<>();
@@ -31,7 +31,7 @@ public class Lexer {
 
     private Token extractToken(Matcher matcher) {
         for (TokenType type : TokenType.values()) {
-            String value = matcher.group(type.group());
+            String value = matcher.group(type.ordinal() + 1);
             if (value != null) {
                 return new Token(type, value);
             }

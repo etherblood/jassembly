@@ -42,7 +42,7 @@ public class Parser {
         Token token = tokens.next();
         if (token.getType() == TokenType.LITERAL_INT) {
             return new Constant(Integer.valueOf(token.getValue()));
-        } else if (Arrays.asList(TokenType.COMPLEMENT, TokenType.NEGATION).contains(token.getType())) {
+        } else if (Arrays.asList(TokenType.OP_COMPLEMENT, TokenType.OP_MINUS).contains(token.getType())) {
             Expression innerExpression = parseExpression(tokens);
             return new UnaryOperation(token.getType(), innerExpression);
         } else {

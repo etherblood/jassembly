@@ -46,10 +46,10 @@ public class Generator {
     public void generateCode(UnaryOperation operation, CommandConsumer consumer) {
         generateCode(operation.getExpression(), consumer);
         switch(operation.getOperator()) {
-            case COMPLEMENT:
+            case OP_COMPLEMENT:
                 consumer.add(Command.INVERT.ordinal());
                 break;
-            case NEGATION:
+            case OP_MINUS:
                 consumer.add(Command.INVERT.ordinal());
                 consumer.add(Command.INC.ordinal());
                 break;

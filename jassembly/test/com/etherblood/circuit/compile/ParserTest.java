@@ -33,8 +33,8 @@ public class ParserTest {
         UnaryOperation negate = (UnaryOperation)invert.getExpression();
         Constant constant = (Constant)negate.getExpression();
         assertEquals("main", function.getIdentifier());
-        assertEquals(TokenType.COMPLEMENT, invert.getOperator());
-        assertEquals(TokenType.NEGATION, negate.getOperator());
+        assertEquals(TokenType.OP_COMPLEMENT, invert.getOperator());
+        assertEquals(TokenType.OP_MINUS, negate.getOperator());
         assertEquals(2, constant.getValue());
     }
 
