@@ -18,8 +18,8 @@ public class SimpleCompiler {
     public List<Integer> compile(String code) {
         List<Token> tokens = lexer.tokenify(code);
         Program ast = parser.parseProgram(tokens.iterator());
-        Jassembly consumer = new Jassembly();
-        generator.generateCode(ast, consumer);
-        return consumer.toProgram();
+        Jassembly jassembly = new Jassembly();
+        generator.generateCode(ast, jassembly);
+        return jassembly.toProgram();
     }
 }

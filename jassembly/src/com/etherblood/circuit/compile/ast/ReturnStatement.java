@@ -1,6 +1,6 @@
 package com.etherblood.circuit.compile.ast;
 
-import com.etherblood.circuit.compile.ast.expression.Expression;
+import com.etherblood.circuit.compile.ast.expression.or.OrExpression;
 
 /**
  *
@@ -8,13 +8,13 @@ import com.etherblood.circuit.compile.ast.expression.Expression;
  */
 public class ReturnStatement {
 
-    private final Expression expression;
+    private final OrExpression expression;
 
-    public ReturnStatement(Expression expression) {
+    public ReturnStatement(OrExpression expression) {
         this.expression = expression;
     }
 
-    public Expression getExpression() {
+    public OrExpression getExpression() {
         return expression;
     }
 }

@@ -42,7 +42,7 @@ public class Main {
         List<Integer> program_1 = multiplyProgram_1(a, b);
 
         String sampleCode = "int main() {\n"
-                + "    return -(2 + -7);\n"
+                + "    return (2 != -7);\n"
                 + "}";
         List<Integer> program_2 = new SimpleCompiler().compile(sampleCode);
 

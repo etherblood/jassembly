@@ -1,4 +1,4 @@
-package com.etherblood.circuit.compile.ast;
+package com.etherblood.circuit.compile.ast.expression.factor;
 
 /**
  *

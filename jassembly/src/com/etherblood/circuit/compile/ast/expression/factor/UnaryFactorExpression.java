@@ -1,18 +1,17 @@
-package com.etherblood.circuit.compile.ast.factor;
+package com.etherblood.circuit.compile.ast.expression.factor;
 
-import com.etherblood.circuit.compile.ast.UnaryOperator;
 import java.util.Objects;
 
 /**
  *
  * @author Philipp
  */
-public class UnaryFactor implements Factor {
+public class UnaryFactorExpression implements FactorExpression {
 
     private final UnaryOperator unaryOperator;
-    private final Factor factor;
+    private final FactorExpression factor;
 
-    public UnaryFactor(UnaryOperator unaryOperator, Factor factor) {
+    public UnaryFactorExpression(UnaryOperator unaryOperator, FactorExpression factor) {
         this.unaryOperator = Objects.requireNonNull(unaryOperator);
         this.factor = Objects.requireNonNull(factor);
     }
@@ -21,7 +20,7 @@ public class UnaryFactor implements Factor {
         return unaryOperator;
     }
 
-    public Factor getFactor() {
+    public FactorExpression getFactor() {
         return factor;
     }
 

@@ -61,12 +61,38 @@ public class Jassembly {
         add(simple(Command.SUB));
     }
 
+    public void and() {
+        add(simple(Command.AND));
+    }
+
+    public void or() {
+        add(simple(Command.OR));
+    }
+
+    public void xor() {
+        add(simple(Command.XOR));
+    }
+
+    public void any() {
+        add(simple(Command.ANY));
+    }
+
     public void inc() {
         add(simple(Command.INC));
     }
 
     public void dec() {
         add(simple(Command.DEC));
+    }
+
+    public void signBit() {
+        add(simple(Command.LOAD_CONST));
+        add(literal(1));
+        add(simple(Command.TO_X0));
+        add(simple(Command.LOAD_CONST));
+        add(literal(~0));
+        add(simple(Command.RSHIFT));
+        add(simple(Command.INVERT));
     }
 
     public void negate() {
