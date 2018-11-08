@@ -3,38 +3,15 @@ package com.etherblood.circuit.compile;
 import com.etherblood.circuit.compile.ast.FunctionDeclaration;
 import com.etherblood.circuit.compile.ast.Program;
 import com.etherblood.circuit.compile.ast.ReturnStatement;
-import com.etherblood.circuit.compile.ast.expression.term.TermOperator;
-import com.etherblood.circuit.compile.ast.expression.additive.AdditiveOperator;
-import com.etherblood.circuit.compile.ast.expression.additive.BinaryAdditiveExpression;
-import com.etherblood.circuit.compile.ast.expression.additive.SimpleAdditiveExpression;
+import com.etherblood.circuit.compile.ast.expression.BinaryOperationExpression;
+import com.etherblood.circuit.compile.ast.expression.BinaryOperator;
+import com.etherblood.circuit.compile.ast.expression.ConstantExpression;
+import com.etherblood.circuit.compile.ast.expression.Expression;
+import com.etherblood.circuit.compile.ast.expression.UnaryOperationExpression;
+import com.etherblood.circuit.compile.ast.expression.UnaryOperator;
 import com.etherblood.circuit.compile.tokens.Token;
 import com.etherblood.circuit.compile.tokens.TokenType;
 import java.util.Iterator;
-import com.etherblood.circuit.compile.ast.expression.additive.AdditiveExpression;
-import com.etherblood.circuit.compile.ast.expression.and.AndExpression;
-import com.etherblood.circuit.compile.ast.expression.and.AndOperator;
-import com.etherblood.circuit.compile.ast.expression.and.BinaryAndExpression;
-import com.etherblood.circuit.compile.ast.expression.and.SimpleAndExpression;
-import com.etherblood.circuit.compile.ast.expression.equality.BinaryEqualityExpression;
-import com.etherblood.circuit.compile.ast.expression.equality.EqualityExpression;
-import com.etherblood.circuit.compile.ast.expression.equality.EqualityOperator;
-import com.etherblood.circuit.compile.ast.expression.equality.SimpleEqualityExpression;
-import com.etherblood.circuit.compile.ast.expression.factor.FactorExpression;
-import com.etherblood.circuit.compile.ast.expression.factor.LiteralFactorExpression;
-import com.etherblood.circuit.compile.ast.expression.factor.SimpleFactorExpression;
-import com.etherblood.circuit.compile.ast.expression.factor.UnaryFactorExpression;
-import com.etherblood.circuit.compile.ast.expression.factor.UnaryOperator;
-import com.etherblood.circuit.compile.ast.expression.or.BinaryOrExpression;
-import com.etherblood.circuit.compile.ast.expression.or.OrExpression;
-import com.etherblood.circuit.compile.ast.expression.or.OrOperator;
-import com.etherblood.circuit.compile.ast.expression.or.SimpleOrExpression;
-import com.etherblood.circuit.compile.ast.expression.relational.BinaryRelationalExpression;
-import com.etherblood.circuit.compile.ast.expression.relational.RelationalExpression;
-import com.etherblood.circuit.compile.ast.expression.relational.RelationalOperator;
-import com.etherblood.circuit.compile.ast.expression.relational.SimpleRelationalExpression;
-import com.etherblood.circuit.compile.ast.expression.term.BinaryTermExpression;
-import com.etherblood.circuit.compile.ast.expression.term.SimpleTermExpression;
-import com.etherblood.circuit.compile.ast.expression.term.TermExpression;
 
 /**
  *
@@ -62,158 +39,158 @@ public class Parser {
 
     private ReturnStatement parseStatement(ConsumableIterator<Token> tokens) {
         consume(tokens, TokenType.KEYWORD_RETURN);
-        OrExpression expression = parseOr(tokens);
+        Expression expression = parseOr(tokens);
         consume(tokens, TokenType.SEMICOLON);
         return new ReturnStatement(expression);
     }
 
-    private OrExpression parseOr(ConsumableIterator<Token> tokens) {
-        AndExpression a = parseAnd(tokens);
+    private Expression parseOr(ConsumableIterator<Token> tokens) {
+        Expression a = parseAnd(tokens);
         Token token = tokens.get();
-        OrOperator operator = null;
+        BinaryOperator operator = null;
         switch (token.getType()) {
             case OP_OR:
                 tokens.consume();
-                operator = OrOperator.OR;
+                operator = BinaryOperator.OR;
                 break;
         }
         if (operator != null) {
-            AndExpression b = parseAnd(tokens);
-            return new BinaryOrExpression(a, operator, b);
+            Expression b = parseAnd(tokens);
+            return new BinaryOperationExpression(a, operator, b);
         }
-        return new SimpleOrExpression(a);
+        return a;
     }
 
-    private AndExpression parseAnd(ConsumableIterator<Token> tokens) {
-        EqualityExpression a = parseEquality(tokens);
+    private Expression parseAnd(ConsumableIterator<Token> tokens) {
+        Expression a = parseEquality(tokens);
         Token token = tokens.get();
-        AndOperator operator = null;
+        BinaryOperator operator = null;
         switch (token.getType()) {
             case OP_AND:
                 tokens.consume();
-                operator = AndOperator.AND;
+                operator = BinaryOperator.AND;
                 break;
         }
         if (operator != null) {
-            EqualityExpression b = parseEquality(tokens);
-            return new BinaryAndExpression(a, operator, b);
+            Expression b = parseEquality(tokens);
+            return new BinaryOperationExpression(a, operator, b);
         }
-        return new SimpleAndExpression(a);
+        return a;
     }
 
-    private EqualityExpression parseEquality(ConsumableIterator<Token> tokens) {
-        RelationalExpression a = parseRelational(tokens);
+    private Expression parseEquality(ConsumableIterator<Token> tokens) {
+        Expression a = parseRelational(tokens);
         Token token = tokens.get();
-        EqualityOperator operator = null;
+        BinaryOperator operator = null;
         switch (token.getType()) {
             case OP_EQUAL:
                 tokens.consume();
-                operator = EqualityOperator.EQUAL;
+                operator = BinaryOperator.EQUAL;
                 break;
             case OP_NOTEQUAL:
                 tokens.consume();
-                operator = EqualityOperator.NOT_EQUAL;
+                operator = BinaryOperator.NOT_EQUAL;
                 break;
         }
         if (operator != null) {
-            RelationalExpression b = parseRelational(tokens);
-            return new BinaryEqualityExpression(a, operator, b);
+            Expression b = parseRelational(tokens);
+            return new BinaryOperationExpression(a, operator, b);
         }
-        return new SimpleEqualityExpression(a);
+        return a;
     }
 
-    private RelationalExpression parseRelational(ConsumableIterator<Token> tokens) {
-        AdditiveExpression a = parseAdditive(tokens);
+    private Expression parseRelational(ConsumableIterator<Token> tokens) {
+        Expression a = parseAdditive(tokens);
         Token token = tokens.get();
-        RelationalOperator operator = null;
+        BinaryOperator operator = null;
         switch (token.getType()) {
             case OP_GREATER:
                 tokens.consume();
-                operator = RelationalOperator.GREATER;
+                operator = BinaryOperator.GREATER_THAN;
                 break;
             case OP_GREATEROREQUAL:
                 tokens.consume();
-                operator = RelationalOperator.GREATER_OR_EQUAL;
+                operator = BinaryOperator.GREATER_OR_EQUAL;
                 break;
             case OP_LESS:
                 tokens.consume();
-                operator = RelationalOperator.LESS;
+                operator = BinaryOperator.LESS_THAN;
                 break;
             case OP_LESSOREQUAL:
                 tokens.consume();
-                operator = RelationalOperator.LESS_OR_EQUAL;
+                operator = BinaryOperator.LESS_OR_EQUAL;
                 break;
         }
         if (operator != null) {
-            AdditiveExpression b = parseAdditive(tokens);
-            return new BinaryRelationalExpression(a, operator, b);
+            Expression b = parseAdditive(tokens);
+            return new BinaryOperationExpression(a, operator, b);
         }
-        return new SimpleRelationalExpression(a);
+        return a;
     }
 
-    private AdditiveExpression parseAdditive(ConsumableIterator<Token> tokens) {
-        TermExpression a = parseTerm(tokens);
+    private Expression parseAdditive(ConsumableIterator<Token> tokens) {
+        Expression a = parseTerm(tokens);
         Token token = tokens.get();
-        AdditiveOperator operator = null;
+        BinaryOperator operator = null;
         switch (token.getType()) {
             case OP_PLUS:
                 tokens.consume();
-                operator = AdditiveOperator.ADD;
+                operator = BinaryOperator.ADD;
                 break;
             case OP_MINUS:
                 tokens.consume();
-                operator = AdditiveOperator.SUBTRACT;
+                operator = BinaryOperator.SUB;
                 break;
         }
         if (operator != null) {
-            TermExpression b = parseTerm(tokens);
-            return new BinaryAdditiveExpression(a, operator, b);
+            Expression b = parseTerm(tokens);
+            return new BinaryOperationExpression(a, operator, b);
         }
-        return new SimpleAdditiveExpression(a);
+        return a;
     }
 
-    private TermExpression parseTerm(ConsumableIterator<Token> tokens) {
-        FactorExpression a = parseFactor(tokens);
+    private Expression parseTerm(ConsumableIterator<Token> tokens) {
+        Expression a = parseFactor(tokens);
         Token token = tokens.get();
-        TermOperator operator = null;
+        BinaryOperator operator = null;
         switch (token.getType()) {
             case OP_MULTIPLY:
                 tokens.consume();
-                operator = TermOperator.MULTIPLY;
+                operator = BinaryOperator.MULT;
                 break;
             case OP_DIVIDE:
                 tokens.consume();
-                operator = TermOperator.DIVIDE;
+                operator = BinaryOperator.DIV;
                 break;
             case OP_REMAINDER:
                 tokens.consume();
-                operator = TermOperator.REMAINDER;
+                operator = BinaryOperator.REMAINDER;
                 break;
         }
         if (operator != null) {
-            FactorExpression b = parseFactor(tokens);
-            return new BinaryTermExpression(a, operator, b);
+            Expression b = parseFactor(tokens);
+            return new BinaryOperationExpression(a, operator, b);
         }
-        return new SimpleTermExpression(a);
+        return a;
     }
 
-    private FactorExpression parseFactor(ConsumableIterator<Token> tokens) {
+    private Expression parseFactor(ConsumableIterator<Token> tokens) {
         Token token = tokens.consume();
         switch (token.getType()) {
             case LITERAL_INT:
-                return new LiteralFactorExpression(Integer.valueOf(token.getValue()));
+                return new ConstantExpression(Integer.valueOf(token.getValue()));
             case OP_COMPLEMENT: {
-                FactorExpression inner = parseFactor(tokens);
-                return new UnaryFactorExpression(UnaryOperator.COMPLEMENT, inner);
+                Expression inner = parseFactor(tokens);
+                return new UnaryOperationExpression(UnaryOperator.COMPLEMENT, inner);
             }
             case OP_MINUS: {
-                FactorExpression inner = parseFactor(tokens);
-                return new UnaryFactorExpression(UnaryOperator.NEGATE, inner);
+                Expression inner = parseFactor(tokens);
+                return new UnaryOperationExpression(UnaryOperator.NEGATE, inner);
             }
             case OPEN_PAREN:
-                OrExpression expression = parseOr(tokens);
+                Expression expression = parseOr(tokens);
                 consume(tokens, TokenType.CLOSE_PAREN);
-                return new SimpleFactorExpression(expression);
+                return expression;
             default:
                 throw new AssertionError();
         }
