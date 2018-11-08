@@ -11,8 +11,7 @@ import com.etherblood.circuit.compile.ast.expression.TermExpression;
 import com.etherblood.circuit.compile.ast.factor.ExpressionFactor;
 import com.etherblood.circuit.compile.ast.factor.LiteralFactor;
 import com.etherblood.circuit.compile.ast.factor.UnaryFactor;
-import com.etherblood.circuit.usability.codes.Command;
-import com.etherblood.circuit.usability.codes.programs.CommandConsumer;
+import com.etherblood.circuit.compile.jassembly.Jassembly;
 
 /**
  *
@@ -20,50 +19,48 @@ import com.etherblood.circuit.usability.codes.programs.CommandConsumer;
  */
 public class CodeGenerator {
 
-    public void generateCode(Program program, CommandConsumer consumer) {
-        function(program.getFunction(), consumer);
-        consumer.add(Command.TERMINATE.ordinal());
+    public void generateCode(Program program, Jassembly jassembly) {
+        function(program.getFunction(), jassembly);
+        jassembly.terminate();
     }
 
-    private void function(FunctionDeclaration function, CommandConsumer consumer) {
-        returnStatement(function.getStatement(), consumer);
+    private void function(FunctionDeclaration function, Jassembly jassembly) {
+        returnStatement(function.getStatement(), jassembly);
     }
 
-    private void returnStatement(ReturnStatement statement, CommandConsumer consumer) {
-        expression(statement.getExpression(), consumer);
+    private void returnStatement(ReturnStatement statement, Jassembly jassembly) {
+        expression(statement.getExpression(), jassembly);
     }
 
-    private void expression(Expression expression, CommandConsumer consumer) {
+    private void expression(Expression expression, Jassembly jassembly) {
         if (expression instanceof TermExpression) {
-            simpleExpression((TermExpression) expression, consumer);
+            simpleExpression((TermExpression) expression, jassembly);
             return;
         }
         if (expression instanceof BinaryExpression) {
-            binaryExpression((BinaryExpression) expression, consumer);
+            binaryExpression((BinaryExpression) expression, jassembly);
             return;
         }
         throw new UnsupportedOperationException();
     }
 
-    private void simpleExpression(TermExpression expression, CommandConsumer consumer) {
-        term(expression.getTerm(), consumer);
+    private void simpleExpression(TermExpression expression, Jassembly jassembly) {
+        term(expression.getTerm(), jassembly);
     }
 
-    private void binaryExpression(BinaryExpression expression, CommandConsumer consumer) {
-        term(expression.getA(), consumer);
+    private void binaryExpression(BinaryExpression expression, Jassembly jassembly) {
+        term(expression.getA(), jassembly);
         if (expression.getOperator() != null) {
-            consumer.add(Command.DEC_STACK.ordinal());
-            consumer.add(Command.WRITE_STACK.ordinal());
-            term(expression.getB(), consumer);
-            consumer.add(Command.TO_X0.ordinal());
-            consumer.add(Command.READ_STACK.ordinal());
-            consumer.add(Command.INC_STACK.ordinal());
+            jassembly.pushStack();
+            term(expression.getB(), jassembly);
+            jassembly.toX0();
+            jassembly.popStack();
             switch (expression.getOperator()) {
                 case ADD:
-                    consumer.add(Command.ADD.ordinal());
+                    jassembly.add();
                     break;
                 case SUBTRACT:
-                    consumer.add(Command.SUB.ordinal());
+                    jassembly.sub();
                     break;
                 default:
                     throw new AssertionError(expression.getOperator().name());
@@ -72,51 +69,49 @@ public class CodeGenerator {
         }
     }
 
-    private void term(Term term, CommandConsumer consumer) {
-        factor(term.getA(), consumer);
+    private void term(Term term, Jassembly jassembly) {
+        factor(term.getA(), jassembly);
         if (term.getOperator() != null) {
             //TODO
             throw new UnsupportedOperationException();
         }
     }
 
-    private void factor(Factor factor, CommandConsumer consumer) {
+    private void factor(Factor factor, Jassembly jassembly) {
         if (factor instanceof LiteralFactor) {
-            literalFactor((LiteralFactor) factor, consumer);
+            literalFactor((LiteralFactor) factor, jassembly);
             return;
         }
         if (factor instanceof ExpressionFactor) {
-            expressionFactor((ExpressionFactor) factor, consumer);
+            expressionFactor((ExpressionFactor) factor, jassembly);
             return;
         }
         if (factor instanceof UnaryFactor) {
-            unaryFactor((UnaryFactor) factor, consumer);
+            unaryFactor((UnaryFactor) factor, jassembly);
             return;
         }
         throw new UnsupportedOperationException();
     }
 
-    private void unaryFactor(UnaryFactor factor, CommandConsumer consumer) {
-        factor(factor.getFactor(), consumer);
+    private void unaryFactor(UnaryFactor factor, Jassembly jassembly) {
+        factor(factor.getFactor(), jassembly);
         switch (factor.getUnaryOperator()) {
             case COMPLEMENT:
-                consumer.add(Command.INVERT.ordinal());
+                jassembly.complement();
                 break;
             case NEGATE:
-                consumer.add(Command.INVERT.ordinal());
-                consumer.add(Command.INC.ordinal());
+                jassembly.negate();
                 break;
             default:
                 throw new AssertionError(factor);
         }
     }
 
-    private void expressionFactor(ExpressionFactor factor, CommandConsumer consumer) {
-        expression(factor.getExpression(), consumer);
+    private void expressionFactor(ExpressionFactor factor, Jassembly jassembly) {
+        expression(factor.getExpression(), jassembly);
     }
 
-    private void literalFactor(LiteralFactor factor, CommandConsumer consumer) {
-        consumer.add(Command.LOAD_CONST.ordinal());
-        consumer.add(factor.getLiteral());
+    private void literalFactor(LiteralFactor factor, Jassembly jassembly) {
+        jassembly.constant(factor.getLiteral());
     }
 }
