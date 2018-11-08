@@ -13,7 +13,7 @@ public class SimpleCompiler {
 
     private final Lexer lexer = new Lexer();
     private final Parser parser = new Parser();
-    private final Generator generator = new Generator();
+    private final CodeGenerator generator = new CodeGenerator();
 
     public List<Integer> compile(String code) {
         List<Token> tokens = lexer.tokenify(code);

@@ -31,9 +31,9 @@ public enum Command {
     ANY(set(OP_ADR, ADD_ADR) | set(R0_ADR, ACC_ADR) | set(W_ADR, ACC_ADR) | set(R0_MOD, MOD_ANY)),
     INC(set(OP_ADR, ADD_ADR) | set(R0_ADR, ACC_ADR) | set(W_ADR, ACC_ADR) | set(OP_ARG, 1)),
     DEC(set(OP_ADR, ADD_ADR) | set(R1_ADR, ACC_ADR) | set(W_ADR, ACC_ADR) | set(R0_MOD, MOD_INV)),
-    READ_STACK(set(OP_ADR, RAM_ADR) | set(R1_ADR, SP_ADR) | set(W_ADR, ACC_ADR)),
-    WRITE_STACK(set(OP_ADR, RAM_ADR) | set(R1_ADR, SP_ADR) | set(R0_ADR, ACC_ADR)),
-    INC_STACK(set(OP_ADR, ADD_ADR) | set(R0_ADR, SP_ADR) | set(W_ADR, SP_ADR) | set(OP_ARG, 1)),
+    READ_STACK(set(OP_ADR, RAM_ADR) | set(W_ADR, ACC_ADR) | set(R1_ADR, SP_ADR)),
+    WRITE_STACK(set(OP_ADR, RAM_ADR) | set(OP_ARG, 1) | set(R0_ADR, ACC_ADR) | set(R1_ADR, SP_ADR)),
+    INC_STACK(set(OP_ADR, ADD_ADR) | set(OP_ARG, 1) | set(R0_ADR, SP_ADR) | set(W_ADR, SP_ADR)),
     DEC_STACK(set(OP_ADR, ADD_ADR) | set(R1_ADR, SP_ADR) | set(W_ADR, SP_ADR) | set(R0_MOD, MOD_INV)),
     TERMINATE(~0L),
     UNDEFINED(~0L);

@@ -40,10 +40,9 @@ public class Main {
         //program above is encoded in methods below
         List<Integer> program_0 = multiplyProgram_0(a, b);
         List<Integer> program_1 = multiplyProgram_1(a, b);
-        
-        
+
         String sampleCode = "int main() {\n"
-                + "    return -~2;\n"
+                + "    return -(2 + -7);\n"
                 + "}";
         List<Integer> program_2 = new SimpleCompiler().compile(sampleCode);
 
@@ -57,12 +56,24 @@ public class Main {
     }
 
     private static void advanceCycle(Computer computer, Engine engine) {
-        computer.clockWire.setSignal(!computer.clockWire.getSignal());
+        computer.clockWire.setSignal(true);
         engine.activate(computer.clockWire);
         while (engine.isActive()) {
             engine.tick();
         }
-        computer.clockWire.setSignal(!computer.clockWire.getSignal());
+
+        computer.writeWire.setSignal(true);
+        engine.activate(computer.writeWire);
+        while (engine.isActive()) {
+            engine.tick();
+        }
+        computer.writeWire.setSignal(false);
+        engine.activate(computer.writeWire);
+        while (engine.isActive()) {
+            engine.tick();
+        }
+
+        computer.clockWire.setSignal(false);
         engine.activate(computer.clockWire);
         while (engine.isActive()) {
             engine.tick();

@@ -1,14 +1,21 @@
 package com.etherblood.circuit.compile;
 
-import com.etherblood.circuit.compile.ast.expressions.Constant;
+import com.etherblood.circuit.compile.ast.factor.Factor;
 import com.etherblood.circuit.compile.ast.FunctionDeclaration;
 import com.etherblood.circuit.compile.ast.Program;
 import com.etherblood.circuit.compile.ast.ReturnStatement;
-import com.etherblood.circuit.compile.ast.expressions.Expression;
-import com.etherblood.circuit.compile.ast.expressions.UnaryOperation;
+import com.etherblood.circuit.compile.ast.Term;
+import com.etherblood.circuit.compile.ast.UnaryOperator;
+import com.etherblood.circuit.compile.ast.expression.Expression;
+import com.etherblood.circuit.compile.ast.FactorOperator;
+import com.etherblood.circuit.compile.ast.TermOperator;
+import com.etherblood.circuit.compile.ast.expression.BinaryExpression;
+import com.etherblood.circuit.compile.ast.expression.TermExpression;
+import com.etherblood.circuit.compile.ast.factor.ExpressionFactor;
+import com.etherblood.circuit.compile.ast.factor.LiteralFactor;
+import com.etherblood.circuit.compile.ast.factor.UnaryFactor;
 import com.etherblood.circuit.compile.tokens.Token;
 import com.etherblood.circuit.compile.tokens.TokenType;
-import java.util.Arrays;
 import java.util.Iterator;
 
 /**
@@ -18,12 +25,16 @@ import java.util.Iterator;
 public class Parser {
 
     public Program parseProgram(Iterator<Token> tokens) {
+        return parseProgram(new ConsumableIterator<>(tokens));
+    }
+
+    private Program parseProgram(ConsumableIterator<Token> tokens) {
         return new Program(parseFunctionDeclaration(tokens));
     }
 
-    public FunctionDeclaration parseFunctionDeclaration(Iterator<Token> tokens) {
+    private FunctionDeclaration parseFunctionDeclaration(ConsumableIterator<Token> tokens) {
         consume(tokens, TokenType.KEYWORD_INT);
-        Token identifier = tokens.next();
+        Token identifier = tokens.consume();
         assertTokenType(identifier, TokenType.IDENTIFIER);
         consume(tokens, TokenType.OPEN_PAREN, TokenType.CLOSE_PAREN, TokenType.OPEN_BRACE);
         ReturnStatement statement = parseStatement(tokens);
@@ -31,29 +42,84 @@ public class Parser {
         return new FunctionDeclaration(identifier.getValue(), statement);
     }
 
-    public ReturnStatement parseStatement(Iterator<Token> tokens) {
+    private ReturnStatement parseStatement(ConsumableIterator<Token> tokens) {
         consume(tokens, TokenType.KEYWORD_RETURN);
         Expression expression = parseExpression(tokens);
         consume(tokens, TokenType.SEMICOLON);
         return new ReturnStatement(expression);
     }
 
-    public Expression parseExpression(Iterator<Token> tokens) {
-        Token token = tokens.next();
-        if (token.getType() == TokenType.LITERAL_INT) {
-            return new Constant(Integer.valueOf(token.getValue()));
-        } else if (Arrays.asList(TokenType.OP_COMPLEMENT, TokenType.OP_MINUS).contains(token.getType())) {
-            Expression innerExpression = parseExpression(tokens);
-            return new UnaryOperation(token.getType(), innerExpression);
-        } else {
-            throw new IllegalArgumentException("Unexpected token " + token);
+    private Expression parseExpression(ConsumableIterator<Token> tokens) {
+        Term a = parseTerm(tokens);
+        Token token = tokens.get();
+        TermOperator operator = null;
+        switch (token.getType()) {
+            case OP_PLUS:
+                tokens.consume();
+                operator = TermOperator.ADD;
+                break;
+            case OP_MINUS:
+                tokens.consume();
+                operator = TermOperator.SUBTRACT;
+                break;
+        }
+        if (operator != null) {
+            Term b = parseTerm(tokens);
+            return new BinaryExpression(a, operator, b);
+        }
+        return new TermExpression(a);
+    }
+
+    private Term parseTerm(ConsumableIterator<Token> tokens) {
+        Factor a = parseFactor(tokens);
+        Token token = tokens.get();
+        FactorOperator operator = null;
+        switch (token.getType()) {
+            case OP_MULTIPLY:
+                tokens.consume();
+                operator = FactorOperator.MULTIPLY;
+                break;
+            case OP_DIVIDE:
+                tokens.consume();
+                operator = FactorOperator.DIVIDE;
+                break;
+            case OP_REMAINDER:
+                tokens.consume();
+                operator = FactorOperator.REMAINDER;
+                break;
+        }
+        if (operator != null) {
+            Factor b = parseFactor(tokens);
+            return new Term(a, operator, b);
+        }
+        return new Term(a);
+    }
+
+    private Factor parseFactor(ConsumableIterator<Token> tokens) {
+        Token token = tokens.consume();
+        switch (token.getType()) {
+            case LITERAL_INT:
+                return new LiteralFactor(Integer.valueOf(token.getValue()));
+            case OP_COMPLEMENT: {
+                Factor inner = parseFactor(tokens);
+                return new UnaryFactor(UnaryOperator.COMPLEMENT, inner);
+            }
+            case OP_MINUS: {
+                Factor inner = parseFactor(tokens);
+                return new UnaryFactor(UnaryOperator.NEGATE, inner);
+            }
+            case OPEN_PAREN:
+                Expression expression = parseExpression(tokens);
+                consume(tokens, TokenType.CLOSE_PAREN);
+                return new ExpressionFactor(expression);
+            default:
+                throw new AssertionError();
         }
     }
 
-    private void consume(Iterator<Token> tokens, TokenType... types) {
+    private void consume(ConsumableIterator<Token> tokens, TokenType... types) {
         for (TokenType type : types) {
-            Token token = tokens.next();
-            assertTokenType(token, type);
+            assertTokenType(tokens.consume(), type);
         }
     }
 

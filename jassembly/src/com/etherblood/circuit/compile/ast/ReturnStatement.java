@@ -1,6 +1,6 @@
 package com.etherblood.circuit.compile.ast;
 
-import com.etherblood.circuit.compile.ast.expressions.Expression;
+import com.etherblood.circuit.compile.ast.expression.Expression;
 
 /**
  *

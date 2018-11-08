@@ -47,8 +47,10 @@ public class Computer {
     public final SimpleModule modWrite;
 
     public final SimpleModule commandDecodeMux;
+    public final SimpleModule ramAnd;
 
     public final Wire clockWire = Wire.off();
+    public final Wire writeWire = Wire.off();
 
     public Computer(int width, List<Integer> program, int maxRam) {
         assert Integer.bitCount(width) == 1;
@@ -84,8 +86,9 @@ public class Computer {
         opArgDemux = factory.demultiplexer(ControlSignals.OP_ARG.length, operatorsAddressWidth);
         modRead0 = factory.signalModifier(width);
         modWrite = factory.signalModifier(width);
+        ramAnd = factory.and();
 
-        for (int i = 0; i < ram.getSignals().size() / width; i++) {
+        for (int i = 0; i < maxRam; i++) {
             ram.getSignals().subRange(i * width, width).set(Command.WAIT.ordinal());
         }
         int nextLine = 0;
@@ -93,6 +96,7 @@ public class Computer {
             ram.getSignals().subRange(nextLine++ * width, width).set(lineCode);
         }
         command.getSignals().set(Command.LOAD_CMD.ordinal());
+        sp.getSignals().set(maxRam);
 
         //TODO: below is workaround for stability issues...
         Engine engine = new Engine();
@@ -160,6 +164,9 @@ public class Computer {
         controlSignals.addAll(inBus(modWrite, width, ControlSignals.W_MOD.length));
         assert controlSignals.size() == ControlSignals.SIGNAL_BITS;
 
+        ramAnd.getIn(0).setWire(writeWire);
+        ramAnd.getIn(1).setWire(opArgDemux.getOut(ControlSignals.RAM_ADR * ControlSignals.OP_ARG.length));
+        ram.getIn(2 * width).setWire(ramAnd.getOut(0));
         adder.getIn(2 * width).setWire(opArgDemux.getOut(ControlSignals.ADD_ADR * ControlSignals.OP_ARG.length));
         lu.getIn(2 * width).setWire(opArgDemux.getOut(ControlSignals.LU_ADR * ControlSignals.OP_ARG.length));
         lu.getIn(2 * width + 1).setWire(opArgDemux.getOut(ControlSignals.LU_ADR * ControlSignals.OP_ARG.length + 1));
@@ -237,6 +244,7 @@ public class Computer {
         engine.activate(quiet(rshift).getGates());
         engine.activate(quiet(lu).getGates());
         engine.activate(quiet(opArgDemux).getGates());
+        engine.activate(quiet(ramAnd).getGates());
     }
 
     private static <T extends SimpleModule> T quiet(T mod) {//probably obsolete?
