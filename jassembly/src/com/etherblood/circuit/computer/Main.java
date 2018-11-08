@@ -78,7 +78,7 @@ public class Main {
         System.out.println("x0: " + computer.x0.getSignals().toHexStrig() + " (" + computer.x0.getSignals().getAsLong() + ")");
         System.out.println("x1: " + computer.x1.getSignals().toHexStrig() + " (" + computer.x1.getSignals().getAsLong() + ")");
         System.out.println("x2: " + computer.x2.getSignals().toHexStrig() + " (" + computer.x2.getSignals().getAsLong() + ")");
-        System.out.println("x3: " + computer.x3.getSignals().toHexStrig() + " (" + computer.x3.getSignals().getAsLong() + ")");
+        System.out.println("sp: " + computer.sp.getSignals().toHexStrig() + " (" + computer.sp.getSignals().getAsLong() + ")");
         System.out.println();
     }
 
@@ -124,9 +124,9 @@ public class Main {
         // if_body:
         program.add(Command.FROM_X1.ordinal());
         program.add(Command.TO_X0.ordinal());
-        program.add(Command.FROM_X3.ordinal());
+        program.add(Command.FROM_SP.ordinal());
         program.add(Command.ADD.ordinal());
-        program.add(Command.TO_X3.ordinal());
+        program.add(Command.TO_SP.ordinal());
         // if_end:
         program.add(Command.LOAD_CONST.ordinal());
         program.add(1);
@@ -141,7 +141,7 @@ public class Main {
         program.add(loopHead);
         program.add(Command.JUMP.ordinal());
         // loop_end:
-        program.add(Command.FROM_X3.ordinal());
+        program.add(Command.FROM_SP.ordinal());
         program.add(Command.TERMINATE.ordinal());
         return program;
     }
@@ -171,9 +171,9 @@ public class Main {
                                         new Commands(
                                                 Command.FROM_X1.ordinal(),
                                                 Command.TO_X0.ordinal(),
-                                                Command.FROM_X3.ordinal(),
+                                                Command.FROM_SP.ordinal(),
                                                 Command.ADD.ordinal(),
-                                                Command.TO_X3.ordinal()
+                                                Command.TO_SP.ordinal()
                                         )),
                                 new Commands(
                                         Command.LOAD_CONST.ordinal(),
@@ -189,7 +189,7 @@ public class Main {
                         )
                 ),
                 new Commands(
-                        Command.FROM_X3.ordinal(),
+                        Command.FROM_SP.ordinal(),
                         Command.TERMINATE.ordinal()
                 )
         ).toCommands(consume);

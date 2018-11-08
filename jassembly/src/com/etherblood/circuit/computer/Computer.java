@@ -30,7 +30,7 @@ public class Computer {
 
     public final SimpleModule noop;
     public final MemoryModule acc;
-    public final MemoryModule x0, x1, x2, x3;
+    public final MemoryModule x0, x1, x2, sp;
     public final MemoryModule pc;
     public final SimpleModule pcInc;
     public final SimpleModule pcMux;
@@ -67,7 +67,7 @@ public class Computer {
         x0 = factory.msFlipFlop(width);
         x1 = factory.msFlipFlop(width);
         x2 = factory.msFlipFlop(width);
-        x3 = factory.msFlipFlop(width);
+        sp = factory.msFlipFlop(width);
         pc = factory.msFlipFlop(width);
         pcInc = factory.incrementer(width);
         pcMux = factory.multiplexer(width);
@@ -114,7 +114,7 @@ public class Computer {
             inBus(x0, 0, width + 1),
             inBus(x1, 0, width + 1),
             inBus(x2, 0, width + 1),
-            inBus(x3, 0, width + 1)
+            inBus(sp, 0, width + 1)
         };
         List<Wire>[] registerOutputs = new List[]{
             outBus(noop, 0, width),
@@ -124,7 +124,7 @@ public class Computer {
             outBus(x0, 0, width),
             outBus(x1, 0, width),
             outBus(x2, 0, width),
-            outBus(x3, 0, width)
+            outBus(sp, 0, width)
         };
         List<WireReference>[] operatorInputsA = new List[]{
             inBus(ram, 0, width),
@@ -225,7 +225,7 @@ public class Computer {
         engine.activate(quiet(x0).getGates());
         engine.activate(quiet(x1).getGates());
         engine.activate(quiet(x2).getGates());
-        engine.activate(quiet(x3).getGates());
+        engine.activate(quiet(sp).getGates());
         engine.activate(quiet(busDemuxRead0).getGates());
         engine.activate(quiet(busDemuxRead1).getGates());
         engine.activate(quiet(busDemuxWrite).getGates());
