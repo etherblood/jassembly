@@ -13,10 +13,12 @@ import com.etherblood.circuit.compile.ast.expression.UnaryOperationExpression;
 import com.etherblood.circuit.compile.ast.expression.UnaryOperator;
 import com.etherblood.circuit.compile.ast.expression.VariableExpression;
 import com.etherblood.circuit.compile.ast.statement.AssignStatement;
+import com.etherblood.circuit.compile.ast.statement.BreakStatement;
 import com.etherblood.circuit.compile.ast.statement.block.VariableDeclaration;
 import com.etherblood.circuit.compile.ast.statement.ExpressionStatement;
 import com.etherblood.circuit.compile.ast.statement.IfElseStatement;
 import com.etherblood.circuit.compile.ast.statement.Statement;
+import com.etherblood.circuit.compile.ast.statement.WhileStatement;
 import com.etherblood.circuit.compile.tokens.Token;
 import com.etherblood.circuit.compile.tokens.TokenType;
 import java.util.ArrayList;
@@ -83,6 +85,7 @@ public class Parser {
                 String variable = tokens.pop().getValue();
                 consume(tokens, TokenType.OP_ASSIGN);
                 Expression expression = parseExpression(tokens);
+                consume(tokens, TokenType.SEMICOLON);
                 return new AssignStatement(variable, expression);
             }
             case KEYWORD_RETURN: {
@@ -96,13 +99,11 @@ public class Parser {
                 Expression expression = parseExpression(tokens);
                 consume(tokens, TokenType.CLOSE_PAREN);
                 Statement ifStatement = parseStatement(tokens);
-                consume(tokens, TokenType.SEMICOLON);
                 Token token = tokens.peek();
                 Statement elseStatement;
                 if (token.getType() == TokenType.KEYWORD_ELSE) {
                     consume(tokens, TokenType.KEYWORD_ELSE);
                     elseStatement = parseStatement(tokens);
-                    consume(tokens, TokenType.SEMICOLON);
                 } else {
                     elseStatement = null;
                 }
@@ -110,6 +111,19 @@ public class Parser {
             }
             case OPEN_BRACE:
                 return parseBlock(tokens);
+            case KEYWORD_WHILE: {
+                consume(tokens, TokenType.KEYWORD_WHILE, TokenType.OPEN_PAREN);
+                Expression expression = parseExpression(tokens);
+                consume(tokens, TokenType.CLOSE_PAREN);
+                Statement body = parseStatement(tokens);
+                return new WhileStatement(expression, body);
+            }
+            case KEYWORD_BREAK:
+                consume(tokens, TokenType.KEYWORD_BREAK, TokenType.SEMICOLON);
+                return new BreakStatement();
+            case KEYWORD_CONTINUE:
+                consume(tokens, TokenType.KEYWORD_CONTINUE, TokenType.SEMICOLON);
+                return new BreakStatement();
             default: {
                 Expression expression = parseExpression(tokens);
                 consume(tokens, TokenType.SEMICOLON);

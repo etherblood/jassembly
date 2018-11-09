@@ -1,6 +1,7 @@
 package com.etherblood.circuit.compile.jassembly;
 
 import java.util.List;
+import java.util.Objects;
 
 public class LabelLiteralCommand extends JassemblyCommand {
 
@@ -12,7 +13,7 @@ public class LabelLiteralCommand extends JassemblyCommand {
     }
 
     public LabelLiteralCommand(String label, int offset) {
-        this.label = label;
+        this.label = Objects.requireNonNull(label);
         this.offset = offset;
     }
 

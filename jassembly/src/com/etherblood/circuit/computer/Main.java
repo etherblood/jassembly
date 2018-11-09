@@ -42,14 +42,19 @@ public class Main {
         List<Integer> program_1 = multiplyProgram_1(a, b);
 
         String sampleCode = "int main() {\n"
-                + "    int a;\n"
-                + "    if(true) a = 7; else a = 9;"
-                + "    return a - 5;\n"
+                + "    int a = 3;\n"
+                + "    int b = 5;\n"
+                + "    int c = 0;\n"
+                + "    while(a != 0) {\n"
+                + "        a = a - 1;\n"
+                + "        c = c + b;\n"
+                + "    }\n"
+                + "    return c;\n"
                 + "}";
         List<Integer> program_2 = new SimpleCompiler().compile(sampleCode);
 
         int width = 16;
-        Computer computer = new Computer(width, program_2, 100);
+        Computer computer = new Computer(width, program_2, 1000);
         Engine engine = new Engine();
         while (computer.command.getSignals().getAsLong() != Command.TERMINATE.ordinal()) {
             advanceCycle(computer, engine);
