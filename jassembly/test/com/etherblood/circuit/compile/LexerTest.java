@@ -23,7 +23,7 @@ public class LexerTest {
                 + "}";
         List<Token> tokens = new Lexer().tokenify(sampleCode);
         assertEquals(Arrays.asList(
-                new Token(TokenType.KEYWORD_INT, "int"),
+                new Token(TokenType.KEYWORD_TYPE, "int"),
                 new Token(TokenType.IDENTIFIER, "main"),
                 new Token(TokenType.OPEN_PAREN, "("),
                 new Token(TokenType.CLOSE_PAREN, ")"),

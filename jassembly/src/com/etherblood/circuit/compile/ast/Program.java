@@ -6,13 +6,13 @@ package com.etherblood.circuit.compile.ast;
  */
 public class Program {
 
-    private final FunctionDeclaration function;
+    private final FunctionDeclaration[] functions;
 
-    public Program(FunctionDeclaration function) {
-        this.function = function;
+    public Program(FunctionDeclaration... functions) {
+        this.functions = functions;
     }
 
-    public FunctionDeclaration getFunction() {
-        return function;
+    public FunctionDeclaration[] getFunctions() {
+        return functions;
     }
 }

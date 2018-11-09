@@ -19,4 +19,9 @@ public class SimpleCommand extends JassemblyCommand {
     public int toCode(List<JassemblyCommand> contextCommands) {
         return command.ordinal();
     }
+
+    @Override
+    public String toString() {
+        return command.toString() + " " + getLabels();
+    }
 }

@@ -8,6 +8,7 @@ import com.etherblood.circuit.compile.ast.statement.ReturnStatement;
 import com.etherblood.circuit.compile.ast.expression.BinaryOperationExpression;
 import com.etherblood.circuit.compile.ast.expression.ConstantExpression;
 import com.etherblood.circuit.compile.ast.expression.Expression;
+import com.etherblood.circuit.compile.ast.expression.FunctionCallExpression;
 import com.etherblood.circuit.compile.ast.expression.UnaryOperationExpression;
 import com.etherblood.circuit.compile.ast.expression.VariableExpression;
 import com.etherblood.circuit.compile.ast.statement.AssignStatement;
@@ -19,7 +20,6 @@ import com.etherblood.circuit.compile.ast.statement.IfElseStatement;
 import com.etherblood.circuit.compile.ast.statement.Statement;
 import com.etherblood.circuit.compile.ast.statement.WhileStatement;
 import com.etherblood.circuit.compile.jassembly.Jassembly;
-import java.util.List;
 import java.util.UUID;
 
 /**
@@ -29,16 +29,27 @@ import java.util.UUID;
 public class CodeGenerator {
 
     public void generateCode(Program program, Jassembly jassembly) {
-        function(program.getFunction(), new CodeGenerationContext(jassembly));
+        CodeGenerationContext context = new CodeGenerationContext(jassembly);
+        call(new FunctionCallExpression("main"), context);
         jassembly.terminate();
+        for (FunctionDeclaration function : program.getFunctions()) {
+            function(function, context);
+        }
+    }
+
+    private void call(FunctionCallExpression call, CodeGenerationContext context) {
+        //TODO args
+        context.getJassembly().call(call.getName());
+        context.getJassembly().fromX1();//move result (stored in x1) to acc
     }
 
     private void function(FunctionDeclaration function, CodeGenerationContext context) {
+        context.getJassembly().labelNext(function.getIdentifier());
         context.getJassembly().fromSB();
         context.getJassembly().pushStack();
         context.getJassembly().fromSP();
         context.getJassembly().toSB();
-        block(function.getBlock(), context);
+        block(function.getBody(), context);
     }
 
     private void block(Block block, CodeGenerationContext context) {
@@ -46,7 +57,7 @@ public class CodeGenerator {
         for (BlockItem item : block.getItems()) {
             blockItem(item, child);
         }
-        int innerVars = child.getVars().size() - context.getVars().size();
+        int innerVars = child.getVars().varCount()- context.getVars().varCount();
         for (int i = 0; i < innerVars; i++) {
             context.getJassembly().delStack();
         }
@@ -59,10 +70,7 @@ public class CodeGenerator {
         }
         if (blockItem instanceof VariableDeclaration) {
             VariableDeclaration declare = (VariableDeclaration) blockItem;
-            if (context.getVars().contains(declare.getVariable())) {
-                throw new IllegalStateException("variable '" + declare.getVariable() + "' declared twice.");
-            }
-            context.getVars().add(declare.getVariable());
+            context.getVars().declareVariable(declare.getVariable());
             if (declare.getExpression() != null) {
                 expression(declare.getExpression(), context);
             } else {
@@ -77,14 +85,14 @@ public class CodeGenerator {
     private void statement(Statement statement, CodeGenerationContext context) {
         if (statement instanceof AssignStatement) {
             AssignStatement assign = (AssignStatement) statement;
-            int variableOffset = variableOffset(context.getVars(), assign.getVariable());
+            int variableOffset = context.getVars().getOffset(assign.getVariable());
             expression(assign.getExpression(), context);
             context.getJassembly().toX1();
 
             context.getJassembly().constant(variableOffset);
             context.getJassembly().toX0();
             context.getJassembly().fromSB();
-            context.getJassembly().sub();
+            context.getJassembly().add();
             context.getJassembly().toX0();
 
             context.getJassembly().fromX1();
@@ -102,27 +110,29 @@ public class CodeGenerator {
             context.getJassembly().toSP();
             context.getJassembly().popStack();
             context.getJassembly().toSB();
-            //TODO: jump to return address
-            context.getJassembly().fromX1();
+            context.getJassembly().ret();
+            //result is in x1
             return;
         }
         if (statement instanceof IfElseStatement) {
             IfElseStatement ifElse = (IfElseStatement) statement;
             expression(ifElse.getCondition(), context);
 
-            String ifBlock = UUID.randomUUID().toString(), elseBlock = UUID.randomUUID().toString(), end = UUID.randomUUID().toString();
+            String ifBlock = "ifBody-" + UUID.randomUUID().toString();
+            String elseBlock = "elseBody-" + UUID.randomUUID().toString();
+            String end = "endif-" + UUID.randomUUID().toString();
 
             context.getJassembly().toX1();
-            context.getJassembly().constant(ifBlock, 0);
+            context.getJassembly().constant(ifBlock);
             context.getJassembly().toX0();
-            context.getJassembly().constant(elseBlock, 0);
+            context.getJassembly().constant(elseBlock);
             context.getJassembly().xor();
             context.getJassembly().toX0();
 
             context.getJassembly().fromX1();
             context.getJassembly().and();
             context.getJassembly().toX0();
-            context.getJassembly().constant(elseBlock, 0);
+            context.getJassembly().constant(elseBlock);
             context.getJassembly().xor();
             context.getJassembly().jump();
 
@@ -130,7 +140,7 @@ public class CodeGenerator {
             if (ifElse.getElseStatement() != null) {
                 statement(ifElse.getElseStatement(), context);
             }
-            context.getJassembly().constant(end, 0);
+            context.getJassembly().constant(end);
             context.getJassembly().jump();
 
             context.getJassembly().labelNext(ifBlock);
@@ -140,40 +150,42 @@ public class CodeGenerator {
         }
         if (statement instanceof WhileStatement) {
             WhileStatement whileStatement = (WhileStatement) statement;
-            String start = UUID.randomUUID().toString(), body = UUID.randomUUID().toString(), end = UUID.randomUUID().toString();
+            String start = "whileHead-" + UUID.randomUUID().toString();
+            String body = "whileBody-" + UUID.randomUUID().toString();
+            String end = "endwhile-" + UUID.randomUUID().toString();
 
             context.getJassembly().labelNext(start);
             expression(whileStatement.getCondition(), context);
 
             context.getJassembly().toX1();
-            context.getJassembly().constant(body, 0);
+            context.getJassembly().constant(body);
             context.getJassembly().toX0();
-            context.getJassembly().constant(end, 0);
+            context.getJassembly().constant(end);
             context.getJassembly().xor();
             context.getJassembly().toX0();
 
             context.getJassembly().fromX1();
             context.getJassembly().and();
             context.getJassembly().toX0();
-            context.getJassembly().constant(end, 0);
+            context.getJassembly().constant(end);
             context.getJassembly().xor();
             context.getJassembly().jump();
 
             context.getJassembly().labelNext(body);
             statement(whileStatement.getBody(), context.withLoopLabels(start, end));
-            context.getJassembly().constant(start, 0);
+            context.getJassembly().constant(start);
             context.getJassembly().jump();
 
             context.getJassembly().labelNext(end);
             return;
         }
         if (statement instanceof BreakStatement) {
-            context.getJassembly().constant(context.getLoopEnd(), 0);
+            context.getJassembly().constant(context.getLoopEnd());
             context.getJassembly().jump();
             return;
         }
         if (statement instanceof ContinueStatement) {
-            context.getJassembly().constant(context.getLoopStart(), 0);
+            context.getJassembly().constant(context.getLoopStart());
             context.getJassembly().jump();
             return;
         }
@@ -188,13 +200,17 @@ public class CodeGenerator {
     }
 
     private void expression(Expression expression, CodeGenerationContext context) {
+        if (expression instanceof FunctionCallExpression) {
+            call((FunctionCallExpression) expression, context);
+            return;
+        }
         if (expression instanceof VariableExpression) {
             VariableExpression variable = (VariableExpression) expression;
-            int variableOffset = variableOffset(context.getVars(), variable.getVariable());
+            int variableOffset = context.getVars().getOffset(variable.getName());
             context.getJassembly().constant(variableOffset);
             context.getJassembly().toX0();
             context.getJassembly().fromSB();
-            context.getJassembly().sub();
+            context.getJassembly().add();
             context.getJassembly().toX0();
 
             context.getJassembly().readRam();
@@ -248,14 +264,6 @@ public class CodeGenerator {
             return;
         }
         throw new UnsupportedOperationException(expression.toString());
-    }
-
-    private static int variableOffset(List<String> vars, String variable) throws IllegalStateException {
-        int variableIndex = vars.indexOf(variable);
-        if (variableIndex == -1) {
-            throw new IllegalStateException("tried to assign undeclared variable '" + variable + "'");
-        }
-        return variableIndex + 1;
     }
 
 }

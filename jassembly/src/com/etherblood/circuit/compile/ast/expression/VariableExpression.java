@@ -2,14 +2,14 @@ package com.etherblood.circuit.compile.ast.expression;
 
 public class VariableExpression implements Expression {
 
-    private final String variable;
+    private final String name;
 
-    public VariableExpression(String variable) {
-        this.variable = variable;
+    public VariableExpression(String name) {
+        this.name = name;
     }
 
-    public String getVariable() {
-        return variable;
+    public String getName() {
+        return name;
     }
 
 }

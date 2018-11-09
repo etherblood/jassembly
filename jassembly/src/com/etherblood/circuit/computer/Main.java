@@ -41,8 +41,8 @@ public class Main {
         List<Integer> program_0 = multiplyProgram_0(a, b);
         List<Integer> program_1 = multiplyProgram_1(a, b);
 
-        String sampleCode = "int main() {\n"
-                + "    int a = 3;\n"
+        String sampleCode = "{int main() {\n"
+                + "    int a = three();\n"
                 + "    int b = 5;\n"
                 + "    int c = 0;\n"
                 + "    while(a != 0) {\n"
@@ -50,11 +50,12 @@ public class Main {
                 + "        c = c + b;\n"
                 + "    }\n"
                 + "    return c;\n"
-                + "}";
+                + "}bool three() {return 3;}}";
         List<Integer> program_2 = new SimpleCompiler().compile(sampleCode);
 
         int width = 16;
         Computer computer = new Computer(width, program_2, 1000);
+        printState(computer);
         Engine engine = new Engine();
         while (computer.command.getSignals().getAsLong() != Command.TERMINATE.ordinal()) {
             advanceCycle(computer, engine);
@@ -95,7 +96,7 @@ public class Main {
         System.out.println("ac: " + computer.acc.getSignals().toHexStrig() + " (" + computer.acc.getSignals().getAsLong() + ")");
         System.out.println("x0: " + computer.x0.getSignals().toHexStrig() + " (" + computer.x0.getSignals().getAsLong() + ")");
         System.out.println("x1: " + computer.x1.getSignals().toHexStrig() + " (" + computer.x1.getSignals().getAsLong() + ")");
-        System.out.println("x2: " + computer.sb.getSignals().toHexStrig() + " (" + computer.sb.getSignals().getAsLong() + ")");
+        System.out.println("sb: " + computer.sb.getSignals().toHexStrig() + " (" + computer.sb.getSignals().getAsLong() + ")");
         System.out.println("sp: " + computer.sp.getSignals().toHexStrig() + " (" + computer.sp.getSignals().getAsLong() + ")");
         System.out.println();
     }

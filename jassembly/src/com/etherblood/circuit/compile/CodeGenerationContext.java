@@ -1,9 +1,6 @@
 package com.etherblood.circuit.compile;
 
 import com.etherblood.circuit.compile.jassembly.Jassembly;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import java.util.Objects;
 
 /**
@@ -13,14 +10,14 @@ import java.util.Objects;
 public class CodeGenerationContext {
 
     private final Jassembly jassembly;
-    private final List<String> vars;
+    private final VariablesContext vars;
     private final String loopStart, loopEnd;
 
     public CodeGenerationContext(Jassembly jassembly) {
-        this(Objects.requireNonNull(jassembly), new ArrayList<>(), null, null);
+        this(Objects.requireNonNull(jassembly), new VariablesContext(), null, null);
     }
 
-    private CodeGenerationContext(Jassembly jassembly, List<String> vars, String loopStart, String loopEnd) {
+    private CodeGenerationContext(Jassembly jassembly, VariablesContext vars, String loopStart, String loopEnd) {
         this.jassembly = jassembly;
         this.vars = vars;
         this.loopStart = loopStart;
@@ -32,14 +29,14 @@ public class CodeGenerationContext {
     }
 
     public CodeGenerationContext withNewScope() {
-        return new CodeGenerationContext(jassembly, new ArrayList<>(vars), loopStart, loopEnd);
+        return new CodeGenerationContext(jassembly, vars.childContext(), loopStart, loopEnd);
     }
 
     public Jassembly getJassembly() {
         return jassembly;
     }
 
-    public List<String> getVars() {
+    public VariablesContext getVars() {
         return vars;
     }
 

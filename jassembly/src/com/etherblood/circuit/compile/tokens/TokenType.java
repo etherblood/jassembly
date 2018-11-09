@@ -11,6 +11,7 @@ public enum TokenType {
     OPEN_BRACE("\\{"),
     CLOSE_BRACE("\\}"),
     SEMICOLON(";"),
+    COMMA(","),
     OP_COMPLEMENT("~"),
     OP_MINUS("-"),
     OP_PLUS("\\+"),
@@ -33,8 +34,7 @@ public enum TokenType {
     OP_ASSIGN("="),
     OP_NOT("!"),
     KEYWORD_RETURN("return"),
-    KEYWORD_INT("int"),
-    KEYWORD_BOOL("bool"),
+    KEYWORD_TYPE("int|bool"),
     KEYWORD_IF("if"),
     KEYWORD_ELSE("else"),
     KEYWORD_WHILE("while"),
@@ -43,7 +43,7 @@ public enum TokenType {
     LITERAL_INT("[0-9]+"),
     LITERAL_BOOL("true|false"),
     IDENTIFIER("[a-zA-Z]\\w*");
-    
+
     private final String pattern;
 
     private TokenType(String pattern) {

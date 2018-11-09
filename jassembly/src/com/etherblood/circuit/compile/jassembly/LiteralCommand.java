@@ -18,4 +18,9 @@ public class LiteralCommand extends JassemblyCommand {
     public int toCode(List<JassemblyCommand> contextCommands) {
         return value;
     }
+
+    @Override
+    public String toString() {
+        return "0x" + Integer.toHexString(value & 0xffff) + " " + getLabels();
+    }
 }

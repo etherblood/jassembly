@@ -9,6 +9,7 @@ import com.etherblood.circuit.compile.ast.expression.BinaryOperationExpression;
 import com.etherblood.circuit.compile.ast.expression.BinaryOperator;
 import com.etherblood.circuit.compile.ast.expression.ConstantExpression;
 import com.etherblood.circuit.compile.ast.expression.Expression;
+import com.etherblood.circuit.compile.ast.expression.FunctionCallExpression;
 import com.etherblood.circuit.compile.ast.expression.UnaryOperationExpression;
 import com.etherblood.circuit.compile.ast.expression.UnaryOperator;
 import com.etherblood.circuit.compile.ast.expression.VariableExpression;
@@ -36,16 +37,35 @@ public class Parser {
     }
 
     private Program parseProgram(ConsumableIterator<Token> tokens) {
-        return new Program(parseFunctionDeclaration(tokens));
+        consume(tokens, TokenType.OPEN_BRACE);
+        List<FunctionDeclaration> functions = new ArrayList<>();
+        while (tokens.peek().getType() != TokenType.CLOSE_BRACE) {
+            functions.add(parseFunctionDeclaration(tokens));
+        }
+        consume(tokens, TokenType.CLOSE_BRACE);
+        return new Program(functions.toArray(new FunctionDeclaration[functions.size()]));
     }
 
     private FunctionDeclaration parseFunctionDeclaration(ConsumableIterator<Token> tokens) {
-        consume(tokens, TokenType.KEYWORD_INT);
+        consume(tokens, TokenType.KEYWORD_TYPE);
         Token identifier = tokens.pop();
         assertTokenType(identifier, TokenType.IDENTIFIER);
-        consume(tokens, TokenType.OPEN_PAREN, TokenType.CLOSE_PAREN);
+        consume(tokens, TokenType.OPEN_PAREN);
+        List<String> parameters = new ArrayList<>();
+        boolean first = true;
+        while (tokens.peek().getType() != TokenType.CLOSE_PAREN) {
+            if (!first) {
+                consume(tokens, TokenType.COMMA);
+                first = false;
+            }
+            consume(tokens, TokenType.KEYWORD_TYPE);
+            Token parameter = tokens.pop();
+            assertTokenType(parameter, TokenType.IDENTIFIER);
+            parameters.add(parameter.getValue());
+        }
+        consume(tokens, TokenType.CLOSE_PAREN);
         Block block = parseBlock(tokens);
-        return new FunctionDeclaration(identifier.getValue(), block);
+        return new FunctionDeclaration(identifier.getValue(), block, parameters.toArray(new String[parameters.size()]));
     }
 
     private Block parseBlock(ConsumableIterator<Token> tokens) {
@@ -60,8 +80,8 @@ public class Parser {
 
     private BlockItem parseBlockItem(ConsumableIterator<Token> tokens) {
         TokenType type = tokens.peek().getType();
-        if (type == TokenType.KEYWORD_INT) {
-            consume(tokens, TokenType.KEYWORD_INT);
+        if (type == TokenType.KEYWORD_TYPE) {
+            consume(tokens, TokenType.KEYWORD_TYPE);
             Token token = tokens.pop();
             assertTokenType(token, TokenType.IDENTIFIER);
             String variable = token.getValue();
@@ -270,6 +290,20 @@ public class Parser {
         Token token = tokens.pop();
         switch (token.getType()) {
             case IDENTIFIER:
+                if (tokens.peek().getType() == TokenType.OPEN_PAREN) {
+                    consume(tokens, TokenType.OPEN_PAREN);
+                    List<Expression> arguments = new ArrayList<>();
+                    boolean first = true;
+                    while (tokens.peek().getType() != TokenType.CLOSE_PAREN) {
+                        if (!first) {
+                            consume(tokens, TokenType.COMMA);
+                            first = false;
+                        }
+                        arguments.add(parseExpression(tokens));
+                    }
+                    consume(tokens, TokenType.CLOSE_PAREN);
+                    return new FunctionCallExpression(token.getValue(), arguments.toArray(new Expression[arguments.size()]));
+                }
                 return new VariableExpression(token.getValue());
             case LITERAL_INT:
                 return new ConstantExpression(Integer.valueOf(token.getValue()));

@@ -3,6 +3,7 @@ package com.etherblood.circuit.compile.jassembly;
 import com.etherblood.circuit.usability.codes.Command;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 /**
  *
@@ -14,7 +15,7 @@ public class Jassembly {
     private final List<String> pendingLabels = new ArrayList<>();
 
     public List<Integer> toProgram() {
-        if(!pendingLabels.isEmpty()) {
+        if (!pendingLabels.isEmpty()) {
             noop();
         }
         List<Integer> program = new ArrayList<>();
@@ -26,6 +27,20 @@ public class Jassembly {
 
     public void labelNext(String label) {
         pendingLabels.add(label);
+    }
+
+    public void call(String function) {
+        String returnLabel = "return-" + UUID.randomUUID().toString();
+        constant(returnLabel);
+        pushStack();
+        constant(function);
+        jump();
+        labelNext(returnLabel);
+    }
+
+    public void ret() {
+        popStack();
+        jump();
     }
 
     public void noop() {
@@ -119,9 +134,9 @@ public class Jassembly {
         add(simple(Command.INVERT));
     }
 
-    public void constant(String label, int offset) {
+    public void constant(String label) {
         add(simple(Command.LOAD_CONST));
-        add(labelLiteral(label, offset));
+        add(labelLiteral(label));
     }
 
     public void constant(int value) {
@@ -142,11 +157,11 @@ public class Jassembly {
         add(simple(Command.DEC_STACK));
         add(simple(Command.WRITE_STACK));
     }
-    
+
     public void readRam() {
         add(simple(Command.READ));
     }
-    
+
     public void writeRam() {
         add(simple(Command.WRITE));
     }
@@ -157,6 +172,10 @@ public class Jassembly {
 
     public void nativeCommand(Command command) {
         add(simple(command));
+    }
+
+    public List<JassemblyCommand> getCommands() {
+        return commands;
     }
 
     private void add(JassemblyCommand command) {
@@ -173,7 +192,7 @@ public class Jassembly {
         return new LiteralCommand(value);
     }
 
-    private static JassemblyCommand labelLiteral(String value, int offset) {
-        return new LabelLiteralCommand(value, offset);
+    private static JassemblyCommand labelLiteral(String value) {
+        return new LabelLiteralCommand(value);
     }
 }
