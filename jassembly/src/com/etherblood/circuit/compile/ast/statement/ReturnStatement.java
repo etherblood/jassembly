@@ -1,17 +1,18 @@
-package com.etherblood.circuit.compile.ast;
+package com.etherblood.circuit.compile.ast.statement;
 
 import com.etherblood.circuit.compile.ast.expression.Expression;
+import java.util.Objects;
 
 /**
  *
  * @author Philipp
  */
-public class ReturnStatement {
+public class ReturnStatement implements Statement {
 
     private final Expression expression;
 
     public ReturnStatement(Expression expression) {
-        this.expression = expression;
+        this.expression = Objects.requireNonNull(expression);
     }
 
     public Expression getExpression() {

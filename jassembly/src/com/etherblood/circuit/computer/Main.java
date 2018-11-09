@@ -42,7 +42,8 @@ public class Main {
         List<Integer> program_1 = multiplyProgram_1(a, b);
 
         String sampleCode = "int main() {\n"
-                + "    return -(2 + -7);\n"
+                + "    int a = 12 + -7;\n"
+                + "    return a -(-33 + 7);\n"
                 + "}";
         List<Integer> program_2 = new SimpleCompiler().compile(sampleCode);
 
@@ -88,7 +89,7 @@ public class Main {
         System.out.println("ac: " + computer.acc.getSignals().toHexStrig() + " (" + computer.acc.getSignals().getAsLong() + ")");
         System.out.println("x0: " + computer.x0.getSignals().toHexStrig() + " (" + computer.x0.getSignals().getAsLong() + ")");
         System.out.println("x1: " + computer.x1.getSignals().toHexStrig() + " (" + computer.x1.getSignals().getAsLong() + ")");
-        System.out.println("x2: " + computer.x2.getSignals().toHexStrig() + " (" + computer.x2.getSignals().getAsLong() + ")");
+        System.out.println("x2: " + computer.sb.getSignals().toHexStrig() + " (" + computer.sb.getSignals().getAsLong() + ")");
         System.out.println("sp: " + computer.sp.getSignals().toHexStrig() + " (" + computer.sp.getSignals().getAsLong() + ")");
         System.out.println();
     }
@@ -102,9 +103,9 @@ public class Main {
         program.add(Command.TO_X1.ordinal());
         program.add(Command.LOAD_CONST.ordinal());
         program.add(b);
-        program.add(Command.TO_X2.ordinal());
+        program.add(Command.TO_SB.ordinal());
         // loop_head:
-        program.add(Command.FROM_X2.ordinal());
+        program.add(Command.FROM_SB.ordinal());
         program.add(Command.ANY.ordinal());
         program.add(Command.TO_X0.ordinal());
         program.add(Command.LOAD_CONST.ordinal());
@@ -117,7 +118,7 @@ public class Main {
         program.add(Command.JUMP.ordinal());
         // loop_body:
         // if_head:
-        program.add(Command.FROM_X2.ordinal());
+        program.add(Command.FROM_SB.ordinal());
         program.add(Command.TO_X0.ordinal());
         program.add(Command.LOAD_CONST.ordinal());
         program.add(1);
@@ -142,9 +143,9 @@ public class Main {
         program.add(Command.LOAD_CONST.ordinal());
         program.add(1);
         program.add(Command.TO_X0.ordinal());
-        program.add(Command.FROM_X2.ordinal());
+        program.add(Command.FROM_SB.ordinal());
         program.add(Command.RSHIFT.ordinal());
-        program.add(Command.TO_X2.ordinal());
+        program.add(Command.TO_SB.ordinal());
         program.add(Command.FROM_X1.ordinal());
         program.add(Command.LSHIFT.ordinal());
         program.add(Command.TO_X1.ordinal());
@@ -166,14 +167,14 @@ public class Main {
                         Command.TO_X1.ordinal(),
                         Command.LOAD_CONST.ordinal(),
                         b,
-                        Command.TO_X2.ordinal()
+                        Command.TO_SB.ordinal()
                 ),
                 new While(
-                        new Commands(Command.FROM_X2.ordinal()),
+                        new Commands(Command.FROM_SB.ordinal()),
                         new Blocks(
                                 new If(
                                         new Commands(
-                                                Command.FROM_X2.ordinal(),
+                                                Command.FROM_SB.ordinal(),
                                                 Command.TO_X0.ordinal(),
                                                 Command.LOAD_CONST.ordinal(),
                                                 1,
@@ -190,9 +191,9 @@ public class Main {
                                         Command.LOAD_CONST.ordinal(),
                                         1,
                                         Command.TO_X0.ordinal(),
-                                        Command.FROM_X2.ordinal(),
+                                        Command.FROM_SB.ordinal(),
                                         Command.RSHIFT.ordinal(),
-                                        Command.TO_X2.ordinal(),
+                                        Command.TO_SB.ordinal(),
                                         Command.FROM_X1.ordinal(),
                                         Command.LSHIFT.ordinal(),
                                         Command.TO_X1.ordinal()

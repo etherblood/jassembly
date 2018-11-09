@@ -2,16 +2,23 @@ package com.etherblood.circuit.compile;
 
 import com.etherblood.circuit.compile.ast.FunctionDeclaration;
 import com.etherblood.circuit.compile.ast.Program;
-import com.etherblood.circuit.compile.ast.ReturnStatement;
+import com.etherblood.circuit.compile.ast.statement.ReturnStatement;
 import com.etherblood.circuit.compile.ast.expression.BinaryOperationExpression;
 import com.etherblood.circuit.compile.ast.expression.BinaryOperator;
 import com.etherblood.circuit.compile.ast.expression.ConstantExpression;
 import com.etherblood.circuit.compile.ast.expression.Expression;
 import com.etherblood.circuit.compile.ast.expression.UnaryOperationExpression;
 import com.etherblood.circuit.compile.ast.expression.UnaryOperator;
+import com.etherblood.circuit.compile.ast.expression.VariableExpression;
+import com.etherblood.circuit.compile.ast.statement.AssignStatement;
+import com.etherblood.circuit.compile.ast.statement.DeclareStatement;
+import com.etherblood.circuit.compile.ast.statement.ExpressionStatement;
+import com.etherblood.circuit.compile.ast.statement.Statement;
 import com.etherblood.circuit.compile.tokens.Token;
 import com.etherblood.circuit.compile.tokens.TokenType;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  *
@@ -32,16 +39,49 @@ public class Parser {
         Token identifier = tokens.consume();
         assertTokenType(identifier, TokenType.IDENTIFIER);
         consume(tokens, TokenType.OPEN_PAREN, TokenType.CLOSE_PAREN, TokenType.OPEN_BRACE);
-        ReturnStatement statement = parseStatement(tokens);
+        List<Statement> statements = new ArrayList<>();
+        while (tokens.get().getType() != TokenType.CLOSE_BRACE) {
+            statements.add(parseStatement(tokens));
+        }
         consume(tokens, TokenType.CLOSE_BRACE);
-        return new FunctionDeclaration(identifier.getValue(), statement);
+        return new FunctionDeclaration(identifier.getValue(), statements.toArray(new Statement[statements.size()]));
     }
 
-    private ReturnStatement parseStatement(ConsumableIterator<Token> tokens) {
-        consume(tokens, TokenType.KEYWORD_RETURN);
-        Expression expression = parseOr(tokens);
-        consume(tokens, TokenType.SEMICOLON);
-        return new ReturnStatement(expression);
+    private Statement parseStatement(ConsumableIterator<Token> tokens) {
+        TokenType type = tokens.get().getType();
+        switch (type) {
+            case IDENTIFIER: {
+                String variable = tokens.consume().getValue();
+                consume(tokens, TokenType.OP_ASSIGN);
+                Expression expression = parseExpression(tokens);
+                return new AssignStatement(variable, expression);
+            }
+            case KEYWORD_RETURN: {
+                consume(tokens, TokenType.KEYWORD_RETURN);
+                Expression expression = parseExpression(tokens);
+                consume(tokens, TokenType.SEMICOLON);
+                return new ReturnStatement(expression);
+            }
+            case KEYWORD_INT: {
+                consume(tokens, TokenType.KEYWORD_INT);
+                Token token = tokens.consume();
+                assertTokenType(token, TokenType.IDENTIFIER);
+                String variable = token.getValue();
+                consume(tokens, TokenType.OP_ASSIGN);
+                Expression expression = parseExpression(tokens);
+                consume(tokens, TokenType.SEMICOLON);
+                return new DeclareStatement(variable, expression);
+            }
+            default: {
+                Expression expression = parseExpression(tokens);
+                consume(tokens, TokenType.SEMICOLON);
+                return new ExpressionStatement(expression);
+            }
+        }
+    }
+
+    private Expression parseExpression(ConsumableIterator<Token> tokens) {
+        return parseOr(tokens);
     }
 
     private Expression parseOr(ConsumableIterator<Token> tokens) {
@@ -177,6 +217,8 @@ public class Parser {
     private Expression parseFactor(ConsumableIterator<Token> tokens) {
         Token token = tokens.consume();
         switch (token.getType()) {
+            case IDENTIFIER:
+                return new VariableExpression(token.getValue());
             case LITERAL_INT:
                 return new ConstantExpression(Integer.valueOf(token.getValue()));
             case OP_COMPLEMENT: {
@@ -188,11 +230,11 @@ public class Parser {
                 return new UnaryOperationExpression(UnaryOperator.NEGATE, inner);
             }
             case OPEN_PAREN:
-                Expression expression = parseOr(tokens);
+                Expression expression = parseExpression(tokens);
                 consume(tokens, TokenType.CLOSE_PAREN);
                 return expression;
             default:
-                throw new AssertionError();
+                throw new AssertionError(token);
         }
     }
 

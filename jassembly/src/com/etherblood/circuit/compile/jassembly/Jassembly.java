@@ -37,8 +37,12 @@ public class Jassembly {
         add(simple(Command.TO_X1));
     }
 
-    public void toX2() {
-        add(simple(Command.TO_X2));
+    public void toSB() {
+        add(simple(Command.TO_SB));
+    }
+
+    public void toSP() {
+        add(simple(Command.TO_SP));
     }
 
     public void fromX0() {
@@ -49,8 +53,12 @@ public class Jassembly {
         add(simple(Command.FROM_X1));
     }
 
-    public void fromX2() {
-        add(simple(Command.FROM_X2));
+    public void fromSB() {
+        add(simple(Command.FROM_SB));
+    }
+
+    public void fromSP() {
+        add(simple(Command.FROM_SP));
     }
 
     public void add() {
@@ -122,6 +130,14 @@ public class Jassembly {
     public void pushStack() {
         add(simple(Command.DEC_STACK));
         add(simple(Command.WRITE_STACK));
+    }
+    
+    public void readRam() {
+        add(simple(Command.READ));
+    }
+    
+    public void writeRam() {
+        add(simple(Command.WRITE));
     }
 
     public void terminate() {

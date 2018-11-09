@@ -27,7 +27,7 @@ public class ControlSignals {
     public static final int ACC_ADR = 3;
     public static final int X0_ADR = 4;
     public static final int X1_ADR = 5;
-    public static final int X2_ADR = 6;
+    public static final int SB_ADR = 6;
     public static final int SP_ADR = 7;
 
     public static final int MOD_ID = 0;

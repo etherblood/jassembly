@@ -30,7 +30,7 @@ public class Computer {
 
     public final SimpleModule noop;
     public final MemoryModule acc;
-    public final MemoryModule x0, x1, x2, sp;
+    public final MemoryModule x0, x1, sb, sp;
     public final MemoryModule pc;
     public final SimpleModule pcInc;
     public final SimpleModule pcMux;
@@ -68,7 +68,7 @@ public class Computer {
         acc = factory.msFlipFlop(width);
         x0 = factory.msFlipFlop(width);
         x1 = factory.msFlipFlop(width);
-        x2 = factory.msFlipFlop(width);
+        sb = factory.msFlipFlop(width);
         sp = factory.msFlipFlop(width);
         pc = factory.msFlipFlop(width);
         pcInc = factory.incrementer(width);
@@ -97,6 +97,7 @@ public class Computer {
         }
         command.getSignals().set(Command.LOAD_CMD.ordinal());
         sp.getSignals().set(maxRam);
+        sb.getSignals().set(maxRam);
 
         //TODO: below is workaround for stability issues...
         Engine engine = new Engine();
@@ -117,7 +118,7 @@ public class Computer {
             inBus(acc, 0, width + 1),
             inBus(x0, 0, width + 1),
             inBus(x1, 0, width + 1),
-            inBus(x2, 0, width + 1),
+            inBus(sb, 0, width + 1),
             inBus(sp, 0, width + 1)
         };
         List<Wire>[] registerOutputs = new List[]{
@@ -127,7 +128,7 @@ public class Computer {
             outBus(acc, 0, width),
             outBus(x0, 0, width),
             outBus(x1, 0, width),
-            outBus(x2, 0, width),
+            outBus(sb, 0, width),
             outBus(sp, 0, width)
         };
         List<WireReference>[] operatorInputsA = new List[]{
@@ -231,7 +232,7 @@ public class Computer {
         engine.activate(quiet(noop).getGates());
         engine.activate(quiet(x0).getGates());
         engine.activate(quiet(x1).getGates());
-        engine.activate(quiet(x2).getGates());
+        engine.activate(quiet(sb).getGates());
         engine.activate(quiet(sp).getGates());
         engine.activate(quiet(busDemuxRead0).getGates());
         engine.activate(quiet(busDemuxRead1).getGates());
