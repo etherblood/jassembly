@@ -1,6 +1,6 @@
 package com.etherblood.circuit.compile.ast;
 
-import com.etherblood.circuit.compile.ast.statement.Statement;
+import com.etherblood.circuit.compile.ast.statement.block.Block;
 
 /**
  *
@@ -9,18 +9,18 @@ import com.etherblood.circuit.compile.ast.statement.Statement;
 public class FunctionDeclaration {
 
     private final String identifier;
-    private final Statement[] statements;
+    private final Block block;
 
-    public FunctionDeclaration(String identifier, Statement[] statements) {
+    public FunctionDeclaration(String identifier, Block block) {
         this.identifier = identifier;
-        this.statements = statements;
+        this.block = block;
     }
 
     public String getIdentifier() {
         return identifier;
     }
 
-    public Statement[] getStatements() {
-        return statements;
+    public Block getBlock() {
+        return block;
     }
 }

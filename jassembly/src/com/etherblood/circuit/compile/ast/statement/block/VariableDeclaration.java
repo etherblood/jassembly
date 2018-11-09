@@ -1,14 +1,14 @@
-package com.etherblood.circuit.compile.ast.statement;
+package com.etherblood.circuit.compile.ast.statement.block;
 
 import com.etherblood.circuit.compile.ast.expression.Expression;
 import java.util.Objects;
 
-public class DeclareStatement implements Statement {
+public class VariableDeclaration implements BlockItem {
 
     private final String variable;
     private final Expression expression;
 
-    public DeclareStatement(String variable, Expression expression) {
+    public VariableDeclaration(String variable, Expression expression) {
         this.variable = Objects.requireNonNull(variable);
         this.expression = expression;
     }

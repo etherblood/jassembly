@@ -2,6 +2,8 @@ package com.etherblood.circuit.compile;
 
 import com.etherblood.circuit.compile.ast.FunctionDeclaration;
 import com.etherblood.circuit.compile.ast.Program;
+import com.etherblood.circuit.compile.ast.statement.block.Block;
+import com.etherblood.circuit.compile.ast.statement.block.BlockItem;
 import com.etherblood.circuit.compile.ast.statement.ReturnStatement;
 import com.etherblood.circuit.compile.ast.expression.BinaryOperationExpression;
 import com.etherblood.circuit.compile.ast.expression.BinaryOperator;
@@ -11,7 +13,7 @@ import com.etherblood.circuit.compile.ast.expression.UnaryOperationExpression;
 import com.etherblood.circuit.compile.ast.expression.UnaryOperator;
 import com.etherblood.circuit.compile.ast.expression.VariableExpression;
 import com.etherblood.circuit.compile.ast.statement.AssignStatement;
-import com.etherblood.circuit.compile.ast.statement.DeclareStatement;
+import com.etherblood.circuit.compile.ast.statement.block.VariableDeclaration;
 import com.etherblood.circuit.compile.ast.statement.ExpressionStatement;
 import com.etherblood.circuit.compile.ast.statement.IfElseStatement;
 import com.etherblood.circuit.compile.ast.statement.Statement;
@@ -39,13 +41,39 @@ public class Parser {
         consume(tokens, TokenType.KEYWORD_INT);
         Token identifier = tokens.pop();
         assertTokenType(identifier, TokenType.IDENTIFIER);
-        consume(tokens, TokenType.OPEN_PAREN, TokenType.CLOSE_PAREN, TokenType.OPEN_BRACE);
-        List<Statement> statements = new ArrayList<>();
+        consume(tokens, TokenType.OPEN_PAREN, TokenType.CLOSE_PAREN);
+        Block block = parseBlock(tokens);
+        return new FunctionDeclaration(identifier.getValue(), block);
+    }
+
+    private Block parseBlock(ConsumableIterator<Token> tokens) {
+        consume(tokens, TokenType.OPEN_BRACE);
+        List<BlockItem> items = new ArrayList<>();
         while (tokens.peek().getType() != TokenType.CLOSE_BRACE) {
-            statements.add(parseStatement(tokens));
+            items.add(parseBlockItem(tokens));
         }
         consume(tokens, TokenType.CLOSE_BRACE);
-        return new FunctionDeclaration(identifier.getValue(), statements.toArray(new Statement[statements.size()]));
+        return new Block(items.toArray(new BlockItem[items.size()]));
+    }
+
+    private BlockItem parseBlockItem(ConsumableIterator<Token> tokens) {
+        TokenType type = tokens.peek().getType();
+        if (type == TokenType.KEYWORD_INT) {
+            consume(tokens, TokenType.KEYWORD_INT);
+            Token token = tokens.pop();
+            assertTokenType(token, TokenType.IDENTIFIER);
+            String variable = token.getValue();
+            Expression expression;
+            if (tokens.peek().getType() == TokenType.OP_ASSIGN) {
+                consume(tokens, TokenType.OP_ASSIGN);
+                expression = parseExpression(tokens);
+            } else {
+                expression = null;
+            }
+            consume(tokens, TokenType.SEMICOLON);
+            return new VariableDeclaration(variable, expression);
+        }
+        return parseStatement(tokens);
     }
 
     private Statement parseStatement(ConsumableIterator<Token> tokens) {
@@ -62,21 +90,6 @@ public class Parser {
                 Expression expression = parseExpression(tokens);
                 consume(tokens, TokenType.SEMICOLON);
                 return new ReturnStatement(expression);
-            }
-            case KEYWORD_INT: {
-                consume(tokens, TokenType.KEYWORD_INT);
-                Token token = tokens.pop();
-                assertTokenType(token, TokenType.IDENTIFIER);
-                String variable = token.getValue();
-                Expression expression;
-                if (tokens.peek().getType() == TokenType.OP_ASSIGN) {
-                    consume(tokens, TokenType.OP_ASSIGN);
-                    expression = parseExpression(tokens);
-                } else {
-                    expression = null;
-                }
-                consume(tokens, TokenType.SEMICOLON);
-                return new DeclareStatement(variable, expression);
             }
             case KEYWORD_IF: {
                 consume(tokens, TokenType.KEYWORD_IF, TokenType.OPEN_PAREN);
@@ -95,6 +108,8 @@ public class Parser {
                 }
                 return new IfElseStatement(expression, ifStatement, elseStatement);
             }
+            case OPEN_BRACE:
+                return parseBlock(tokens);
             default: {
                 Expression expression = parseExpression(tokens);
                 consume(tokens, TokenType.SEMICOLON);

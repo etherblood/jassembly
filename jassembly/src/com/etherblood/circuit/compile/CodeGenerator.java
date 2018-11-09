@@ -2,6 +2,8 @@ package com.etherblood.circuit.compile;
 
 import com.etherblood.circuit.compile.ast.FunctionDeclaration;
 import com.etherblood.circuit.compile.ast.Program;
+import com.etherblood.circuit.compile.ast.statement.block.Block;
+import com.etherblood.circuit.compile.ast.statement.block.BlockItem;
 import com.etherblood.circuit.compile.ast.statement.ReturnStatement;
 import com.etherblood.circuit.compile.ast.expression.BinaryOperationExpression;
 import com.etherblood.circuit.compile.ast.expression.ConstantExpression;
@@ -9,12 +11,13 @@ import com.etherblood.circuit.compile.ast.expression.Expression;
 import com.etherblood.circuit.compile.ast.expression.UnaryOperationExpression;
 import com.etherblood.circuit.compile.ast.expression.VariableExpression;
 import com.etherblood.circuit.compile.ast.statement.AssignStatement;
-import com.etherblood.circuit.compile.ast.statement.DeclareStatement;
+import com.etherblood.circuit.compile.ast.statement.block.VariableDeclaration;
 import com.etherblood.circuit.compile.ast.statement.ExpressionStatement;
 import com.etherblood.circuit.compile.ast.statement.IfElseStatement;
 import com.etherblood.circuit.compile.ast.statement.Statement;
 import com.etherblood.circuit.compile.jassembly.Jassembly;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -34,17 +37,29 @@ public class CodeGenerator {
         jassembly.pushStack();
         jassembly.fromSP();
         jassembly.toSB();
-        List<String> vars = new ArrayList<>();
-        for (Statement statement : function.getStatements()) {
-            statement(statement, vars, jassembly);
+        block(function.getBlock(), Collections.emptyList(), jassembly);
+    }
+
+    private void block(Block block, List<String> parent, Jassembly jassembly) {
+        List<String> vars = new ArrayList<>(parent);
+        for (BlockItem item : block.getItems()) {
+            blockItem(item, vars, jassembly);
+        }
+        int innerVars = vars.size() - parent.size();
+        for (int i = 0; i < innerVars; i++) {
+            jassembly.delStack();
         }
     }
 
-    private void statement(Statement statement, List<String> vars, Jassembly jassembly) {
-        if (statement instanceof DeclareStatement) {
-            DeclareStatement declare = (DeclareStatement) statement;
+    private void blockItem(BlockItem blockItem, List<String> vars, Jassembly jassembly) {
+        if (blockItem instanceof Statement) {
+            statement((Statement) blockItem, vars, jassembly);
+            return;
+        }
+        if (blockItem instanceof VariableDeclaration) {
+            VariableDeclaration declare = (VariableDeclaration) blockItem;
             if (vars.contains(declare.getVariable())) {
-                throw new IllegalStateException("variable " + declare.getVariable() + " declared twice.");
+                throw new IllegalStateException("variable '" + declare.getVariable() + "' declared twice.");
             }
             vars.add(declare.getVariable());
             if (declare.getExpression() != null) {
@@ -55,6 +70,10 @@ public class CodeGenerator {
             jassembly.pushStack();
             return;
         }
+        throw new UnsupportedOperationException(blockItem.toString());
+    }
+
+    private void statement(Statement statement, List<String> vars, Jassembly jassembly) {
         if (statement instanceof AssignStatement) {
             AssignStatement assign = (AssignStatement) statement;
             int variableOffset = variableOffset(vars, assign.getVariable());
@@ -187,7 +206,7 @@ public class CodeGenerator {
     private static int variableOffset(List<String> vars, String variable) throws IllegalStateException {
         int variableIndex = vars.indexOf(variable);
         if (variableIndex == -1) {
-            throw new IllegalStateException("tried to assign undeclared variable " + variable);
+            throw new IllegalStateException("tried to assign undeclared variable '" + variable + "'");
         }
         return variableIndex + 1;
     }

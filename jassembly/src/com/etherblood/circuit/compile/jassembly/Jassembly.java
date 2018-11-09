@@ -129,6 +129,10 @@ public class Jassembly {
         add(literal(value));
     }
 
+    public void delStack() {
+        add(simple(Command.INC_STACK));
+    }
+
     public void popStack() {
         add(simple(Command.READ_STACK));
         add(simple(Command.INC_STACK));
