@@ -13,6 +13,7 @@ import com.etherblood.circuit.compile.ast.expression.VariableExpression;
 import com.etherblood.circuit.compile.ast.statement.AssignStatement;
 import com.etherblood.circuit.compile.ast.statement.DeclareStatement;
 import com.etherblood.circuit.compile.ast.statement.ExpressionStatement;
+import com.etherblood.circuit.compile.ast.statement.IfElseStatement;
 import com.etherblood.circuit.compile.ast.statement.Statement;
 import com.etherblood.circuit.compile.tokens.Token;
 import com.etherblood.circuit.compile.tokens.TokenType;
@@ -36,11 +37,11 @@ public class Parser {
 
     private FunctionDeclaration parseFunctionDeclaration(ConsumableIterator<Token> tokens) {
         consume(tokens, TokenType.KEYWORD_INT);
-        Token identifier = tokens.consume();
+        Token identifier = tokens.pop();
         assertTokenType(identifier, TokenType.IDENTIFIER);
         consume(tokens, TokenType.OPEN_PAREN, TokenType.CLOSE_PAREN, TokenType.OPEN_BRACE);
         List<Statement> statements = new ArrayList<>();
-        while (tokens.get().getType() != TokenType.CLOSE_BRACE) {
+        while (tokens.peek().getType() != TokenType.CLOSE_BRACE) {
             statements.add(parseStatement(tokens));
         }
         consume(tokens, TokenType.CLOSE_BRACE);
@@ -48,10 +49,10 @@ public class Parser {
     }
 
     private Statement parseStatement(ConsumableIterator<Token> tokens) {
-        TokenType type = tokens.get().getType();
+        TokenType type = tokens.peek().getType();
         switch (type) {
             case IDENTIFIER: {
-                String variable = tokens.consume().getValue();
+                String variable = tokens.pop().getValue();
                 consume(tokens, TokenType.OP_ASSIGN);
                 Expression expression = parseExpression(tokens);
                 return new AssignStatement(variable, expression);
@@ -64,13 +65,35 @@ public class Parser {
             }
             case KEYWORD_INT: {
                 consume(tokens, TokenType.KEYWORD_INT);
-                Token token = tokens.consume();
+                Token token = tokens.pop();
                 assertTokenType(token, TokenType.IDENTIFIER);
                 String variable = token.getValue();
-                consume(tokens, TokenType.OP_ASSIGN);
-                Expression expression = parseExpression(tokens);
+                Expression expression;
+                if (tokens.peek().getType() == TokenType.OP_ASSIGN) {
+                    consume(tokens, TokenType.OP_ASSIGN);
+                    expression = parseExpression(tokens);
+                } else {
+                    expression = null;
+                }
                 consume(tokens, TokenType.SEMICOLON);
                 return new DeclareStatement(variable, expression);
+            }
+            case KEYWORD_IF: {
+                consume(tokens, TokenType.KEYWORD_IF, TokenType.OPEN_PAREN);
+                Expression expression = parseExpression(tokens);
+                consume(tokens, TokenType.CLOSE_PAREN);
+                Statement ifStatement = parseStatement(tokens);
+                consume(tokens, TokenType.SEMICOLON);
+                Token token = tokens.peek();
+                Statement elseStatement;
+                if (token.getType() == TokenType.KEYWORD_ELSE) {
+                    consume(tokens, TokenType.KEYWORD_ELSE);
+                    elseStatement = parseStatement(tokens);
+                    consume(tokens, TokenType.SEMICOLON);
+                } else {
+                    elseStatement = null;
+                }
+                return new IfElseStatement(expression, ifStatement, elseStatement);
             }
             default: {
                 Expression expression = parseExpression(tokens);
@@ -86,11 +109,11 @@ public class Parser {
 
     private Expression parseOr(ConsumableIterator<Token> tokens) {
         Expression a = parseAnd(tokens);
-        Token token = tokens.get();
+        Token token = tokens.peek();
         BinaryOperator operator = null;
         switch (token.getType()) {
             case OP_OR:
-                tokens.consume();
+                tokens.pop();
                 operator = BinaryOperator.OR;
                 break;
         }
@@ -103,11 +126,11 @@ public class Parser {
 
     private Expression parseAnd(ConsumableIterator<Token> tokens) {
         Expression a = parseEquality(tokens);
-        Token token = tokens.get();
+        Token token = tokens.peek();
         BinaryOperator operator = null;
         switch (token.getType()) {
             case OP_AND:
-                tokens.consume();
+                tokens.pop();
                 operator = BinaryOperator.AND;
                 break;
         }
@@ -120,15 +143,15 @@ public class Parser {
 
     private Expression parseEquality(ConsumableIterator<Token> tokens) {
         Expression a = parseRelational(tokens);
-        Token token = tokens.get();
+        Token token = tokens.peek();
         BinaryOperator operator = null;
         switch (token.getType()) {
             case OP_EQUAL:
-                tokens.consume();
+                tokens.pop();
                 operator = BinaryOperator.EQUAL;
                 break;
             case OP_NOTEQUAL:
-                tokens.consume();
+                tokens.pop();
                 operator = BinaryOperator.NOT_EQUAL;
                 break;
         }
@@ -141,23 +164,23 @@ public class Parser {
 
     private Expression parseRelational(ConsumableIterator<Token> tokens) {
         Expression a = parseAdditive(tokens);
-        Token token = tokens.get();
+        Token token = tokens.peek();
         BinaryOperator operator = null;
         switch (token.getType()) {
             case OP_GREATER:
-                tokens.consume();
+                tokens.pop();
                 operator = BinaryOperator.GREATER_THAN;
                 break;
             case OP_GREATEROREQUAL:
-                tokens.consume();
+                tokens.pop();
                 operator = BinaryOperator.GREATER_OR_EQUAL;
                 break;
             case OP_LESS:
-                tokens.consume();
+                tokens.pop();
                 operator = BinaryOperator.LESS_THAN;
                 break;
             case OP_LESSOREQUAL:
-                tokens.consume();
+                tokens.pop();
                 operator = BinaryOperator.LESS_OR_EQUAL;
                 break;
         }
@@ -170,15 +193,15 @@ public class Parser {
 
     private Expression parseAdditive(ConsumableIterator<Token> tokens) {
         Expression a = parseTerm(tokens);
-        Token token = tokens.get();
+        Token token = tokens.peek();
         BinaryOperator operator = null;
         switch (token.getType()) {
             case OP_PLUS:
-                tokens.consume();
+                tokens.pop();
                 operator = BinaryOperator.ADD;
                 break;
             case OP_MINUS:
-                tokens.consume();
+                tokens.pop();
                 operator = BinaryOperator.SUB;
                 break;
         }
@@ -191,19 +214,19 @@ public class Parser {
 
     private Expression parseTerm(ConsumableIterator<Token> tokens) {
         Expression a = parseFactor(tokens);
-        Token token = tokens.get();
+        Token token = tokens.peek();
         BinaryOperator operator = null;
         switch (token.getType()) {
             case OP_MULTIPLY:
-                tokens.consume();
+                tokens.pop();
                 operator = BinaryOperator.MULT;
                 break;
             case OP_DIVIDE:
-                tokens.consume();
+                tokens.pop();
                 operator = BinaryOperator.DIV;
                 break;
             case OP_REMAINDER:
-                tokens.consume();
+                tokens.pop();
                 operator = BinaryOperator.REMAINDER;
                 break;
         }
@@ -215,12 +238,15 @@ public class Parser {
     }
 
     private Expression parseFactor(ConsumableIterator<Token> tokens) {
-        Token token = tokens.consume();
+        Token token = tokens.pop();
         switch (token.getType()) {
             case IDENTIFIER:
                 return new VariableExpression(token.getValue());
             case LITERAL_INT:
                 return new ConstantExpression(Integer.valueOf(token.getValue()));
+            case LITERAL_BOOL:
+                boolean value = Boolean.valueOf(token.getValue());
+                return new ConstantExpression(value ? ~0 : 0);
             case OP_COMPLEMENT: {
                 Expression inner = parseFactor(tokens);
                 return new UnaryOperationExpression(UnaryOperator.COMPLEMENT, inner);
@@ -240,7 +266,7 @@ public class Parser {
 
     private void consume(ConsumableIterator<Token> tokens, TokenType... types) {
         for (TokenType type : types) {
-            assertTokenType(tokens.consume(), type);
+            assertTokenType(tokens.pop(), type);
         }
     }
 

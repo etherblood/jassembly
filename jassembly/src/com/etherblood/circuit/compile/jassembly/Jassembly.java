@@ -14,6 +14,9 @@ public class Jassembly {
     private final List<String> pendingLabels = new ArrayList<>();
 
     public List<Integer> toProgram() {
+        if(!pendingLabels.isEmpty()) {
+            noop();
+        }
         List<Integer> program = new ArrayList<>();
         for (JassemblyCommand command : commands) {
             program.add(command.toCode(commands));
@@ -23,6 +26,10 @@ public class Jassembly {
 
     public void labelNext(String label) {
         pendingLabels.add(label);
+    }
+
+    public void noop() {
+        add(simple(Command.WAIT));
     }
 
     public void jump() {

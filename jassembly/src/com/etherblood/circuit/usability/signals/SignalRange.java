@@ -42,7 +42,7 @@ public class SignalRange {
     public long getAsLong() {
         long result = 0;
         for (int i = 0; i < length; i++) {
-            if(get(i).getSignal()) {
+            if (get(i).getSignal()) {
                 result |= 1L << i;
             }
         }
@@ -68,7 +68,15 @@ public class SignalRange {
     public String toHexStrig() {
         BitSet bits = get();
         byte[] a = bits.toByteArray();
-        byte[] b = Arrays.copyOf(a, -Math.floorDiv(size(), -8));
+        byte[] b = new byte[-Math.floorDiv(size(), -8)];
+        for (int i = 0; i < b.length; i++) {
+            int j = b.length - i - 1;
+            if (j < a.length) {
+                b[i] = a[j];
+            } else {
+                b[i] = 0;
+            }
+        }
         return "0x" + DatatypeConverter.printHexBinary(b);
 
     }

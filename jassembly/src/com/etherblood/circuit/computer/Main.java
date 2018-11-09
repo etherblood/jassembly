@@ -42,8 +42,9 @@ public class Main {
         List<Integer> program_1 = multiplyProgram_1(a, b);
 
         String sampleCode = "int main() {\n"
-                + "    int a = 12 + -7;\n"
-                + "    return a -(-33 + 7);\n"
+                + "    int a;\n"
+                + "    if(true) a = 7; else a = 9;"
+                + "    return a - 5;\n"
                 + "}";
         List<Integer> program_2 = new SimpleCompiler().compile(sampleCode);
 

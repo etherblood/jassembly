@@ -11,10 +11,12 @@ import com.etherblood.circuit.compile.ast.expression.VariableExpression;
 import com.etherblood.circuit.compile.ast.statement.AssignStatement;
 import com.etherblood.circuit.compile.ast.statement.DeclareStatement;
 import com.etherblood.circuit.compile.ast.statement.ExpressionStatement;
+import com.etherblood.circuit.compile.ast.statement.IfElseStatement;
 import com.etherblood.circuit.compile.ast.statement.Statement;
 import com.etherblood.circuit.compile.jassembly.Jassembly;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 /**
  *
@@ -82,6 +84,38 @@ public class CodeGenerator {
             jassembly.toSB();
             //TODO: jump to return address
             jassembly.fromX1();
+            return;
+        }
+        if (statement instanceof IfElseStatement) {
+            IfElseStatement ifElse = (IfElseStatement) statement;
+            expression(ifElse.getCondition(), vars, jassembly);
+
+            String ifBlock = UUID.randomUUID().toString(), elseBlock = UUID.randomUUID().toString(), end = UUID.randomUUID().toString();
+
+            jassembly.toX1();
+            jassembly.constant(ifBlock, 0);
+            jassembly.toX0();
+            jassembly.constant(elseBlock, 0);
+            jassembly.xor();
+            jassembly.toX0();
+
+            jassembly.fromX1();
+            jassembly.and();
+            jassembly.toX0();
+            jassembly.constant(elseBlock, 0);
+            jassembly.xor();
+            jassembly.jump();
+
+            jassembly.labelNext(elseBlock);
+            if (ifElse.getElseStatement() != null) {
+                statement(ifElse.getElseStatement(), vars, jassembly);
+            }
+            jassembly.constant(end, 0);
+            jassembly.jump();
+
+            jassembly.labelNext(ifBlock);
+            statement(ifElse.getIfStatement(), vars, jassembly);
+            jassembly.labelNext(end);
             return;
         }
         throw new UnsupportedOperationException(statement.toString());

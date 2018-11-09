@@ -15,15 +15,15 @@ public class ConsumableIterator<T> {
         this.iterator = iterator;
     }
 
-    public T consume() {
+    public T pop() {
         try {
-            return get();
+            return peek();
         } finally {
             current = null;
         }
     }
 
-    public T get() {
+    public T peek() {
         if (current == null && iterator.hasNext()) {
             current = iterator.next();
         }

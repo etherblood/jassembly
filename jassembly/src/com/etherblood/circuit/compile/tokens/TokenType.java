@@ -35,6 +35,8 @@ public enum TokenType {
     KEYWORD_RETURN("return"),
     KEYWORD_INT("int"),
     KEYWORD_BOOL("bool"),
+    KEYWORD_IF("if"),
+    KEYWORD_ELSE("else"),
     LITERAL_INT("[0-9]+"),
     LITERAL_BOOL("true|false"),
     IDENTIFIER("[a-zA-Z]\\w*");
