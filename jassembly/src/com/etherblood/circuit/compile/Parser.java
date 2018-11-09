@@ -52,12 +52,12 @@ public class Parser {
         assertTokenType(identifier, TokenType.IDENTIFIER);
         consume(tokens, TokenType.OPEN_PAREN);
         List<String> parameters = new ArrayList<>();
-        boolean first = true;
+        boolean comma = false;
         while (tokens.peek().getType() != TokenType.CLOSE_PAREN) {
-            if (!first) {
+            if (comma) {
                 consume(tokens, TokenType.COMMA);
-                first = false;
             }
+            comma = true;
             consume(tokens, TokenType.KEYWORD_TYPE);
             Token parameter = tokens.pop();
             assertTokenType(parameter, TokenType.IDENTIFIER);
@@ -293,12 +293,12 @@ public class Parser {
                 if (tokens.peek().getType() == TokenType.OPEN_PAREN) {
                     consume(tokens, TokenType.OPEN_PAREN);
                     List<Expression> arguments = new ArrayList<>();
-                    boolean first = true;
+                    boolean comma = false;
                     while (tokens.peek().getType() != TokenType.CLOSE_PAREN) {
-                        if (!first) {
+                        if (comma) {
                             consume(tokens, TokenType.COMMA);
-                            first = false;
                         }
+                        comma = true;
                         arguments.add(parseExpression(tokens));
                     }
                     consume(tokens, TokenType.CLOSE_PAREN);

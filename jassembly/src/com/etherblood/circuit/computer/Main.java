@@ -43,14 +43,19 @@ public class Main {
 
         String sampleCode = "{int main() {\n"
                 + "    int a = three();\n"
-                + "    int b = 5;\n"
+                + "    int b = 19;\n"
+                + "    return mult(five(), a);\n"
+                + "}\n"
+                + "bool three() {return 3;}\n"
+                + "int five() {return 2 + 3;}\n"
+                + "int mult(int a, int b) {\n"
                 + "    int c = 0;\n"
                 + "    while(a != 0) {\n"
                 + "        a = a - 1;\n"
                 + "        c = c + b;\n"
                 + "    }\n"
                 + "    return c;\n"
-                + "}bool three() {return 3;}}";
+                + "}}";
         List<Integer> program_2 = new SimpleCompiler().compile(sampleCode);
 
         int width = 16;

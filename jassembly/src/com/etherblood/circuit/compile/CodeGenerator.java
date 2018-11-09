@@ -38,12 +38,22 @@ public class CodeGenerator {
     }
 
     private void call(FunctionCallExpression call, CodeGenerationContext context) {
-        //TODO args
+        for (Expression argument : call.getArguments()) {
+            expression(argument, context);
+            context.getJassembly().pushStack();
+        }
         context.getJassembly().call(call.getName());
         context.getJassembly().fromX1();//move result (stored in x1) to acc
+        for (Expression argument : call.getArguments()) {
+            context.getJassembly().delStack();
+        }
     }
 
     private void function(FunctionDeclaration function, CodeGenerationContext context) {
+        String[] parameters = function.getParameters();
+        for (int i = parameters.length - 1; i >= 0; i--) {
+            context.getVars().declareParameter(parameters[i]);
+        }
         context.getJassembly().labelNext(function.getIdentifier());
         context.getJassembly().fromSB();
         context.getJassembly().pushStack();
@@ -57,7 +67,7 @@ public class CodeGenerator {
         for (BlockItem item : block.getItems()) {
             blockItem(item, child);
         }
-        int innerVars = child.getVars().varCount()- context.getVars().varCount();
+        int innerVars = child.getVars().varCount() - context.getVars().varCount();
         for (int i = 0; i < innerVars; i++) {
             context.getJassembly().delStack();
         }
