@@ -22,25 +22,35 @@ public class TestPrograms {
     @Test
     public void _3x5() {
         List<Integer> program = compiler.compile(loadFile("3x5.txt"));
-        long result = compute(program);
+        long result = compute(program, 8, program.size() + 20);
         assertEquals(15, result);
     }
     @Test
     public void _128x2000() {
         List<Integer> program = compiler.compile(loadFile("128x2000.txt"));
-        long result = compute(program);
+        long result = compute(program, 16, program.size() + 20);
         assertEquals(59392, result);
     }
 
     @Test
     public void fibonacci() {
         List<Integer> program = compiler.compile(loadFile("fibonacci.txt"));
-        long result = compute(program);
+        long result = compute(program, 8, program.size() + 50);
         assertEquals(55, result);
     }
+
+    @Test
+    public void relational() {
+        List<Integer> program = compiler.compile(loadFile("relational.txt"));
+        long result = compute(program, 16, program.size() + 20);
+        assertEquals(1, result);
+    }
     
-    private static long compute(List<Integer> program) {
-        Computer computer = new Computer(16, program, 1000);
+    private static long compute(List<Integer> program, int width, int ram) {
+        if(1 << width < ram) {
+            throw new AssertionError("wordsize too small to address full RAM.");
+        }
+        Computer computer = new Computer(width, program, ram);
         Engine engine = new Engine();
         while (computer.command.getSignals().getAsLong() != Command.TERMINATE.ordinal()) {
             advanceCycle(computer, engine);

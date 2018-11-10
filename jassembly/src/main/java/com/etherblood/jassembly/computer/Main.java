@@ -48,7 +48,7 @@ public class Main {
         String sampleCode = new String(Files.readAllBytes(new File(classloader.getResource("fibonacci.txt").toURI()).toPath()));
         List<Integer> program_2 = new SimpleCompiler().compile(sampleCode);
 
-        int width = 16;
+        int width = 8;
         Computer computer = new Computer(width, program_2, 1000);
         printState(computer);
         Engine engine = new Engine();

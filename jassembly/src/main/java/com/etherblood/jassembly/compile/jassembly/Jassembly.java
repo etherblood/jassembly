@@ -124,13 +124,7 @@ public class Jassembly {
     }
 
     public void signBit() {
-        add(simple(Command.LOAD_CONST));
-        add(literal(1));
-        add(simple(Command.TO_X0));
-        add(simple(Command.LOAD_CONST));
-        add(literal(~0));
-        add(simple(Command.RSHIFT));
-        add(simple(Command.INVERT));
+        add(simple(Command.SIGN_BIT));
     }
 
     public void negate() {

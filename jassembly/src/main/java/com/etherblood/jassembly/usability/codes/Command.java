@@ -31,6 +31,7 @@ public enum Command {
     ANY(set(OP_ADR, ADD_ADR) | set(R0_ADR, ACC_ADR) | set(W_ADR, ACC_ADR) | set(R0_MOD, MOD_ANY)),
     INC(set(OP_ADR, ADD_ADR) | set(R0_ADR, ACC_ADR) | set(W_ADR, ACC_ADR) | set(OP_ARG, 1)),
     DEC(set(OP_ADR, ADD_ADR) | set(R1_ADR, ACC_ADR) | set(W_ADR, ACC_ADR) | set(R0_MOD, MOD_INV)),
+    SIGN_BIT(set(OP_ADR, ADD_ADR) | set(W_ADR, ACC_ADR) | set(OP_ARG, 1) | set(W_MOD, MOD_REV)),
     READ_STACK(set(OP_ADR, RAM_ADR) | set(W_ADR, ACC_ADR) | set(R1_ADR, SP_ADR)),
     WRITE_STACK(set(OP_ADR, RAM_ADR) | set(OP_ARG, 1) | set(R0_ADR, ACC_ADR) | set(R1_ADR, SP_ADR)),
     READ(set(OP_ADR, RAM_ADR) | set(W_ADR, ACC_ADR) | set(R1_ADR, X0_ADR)),

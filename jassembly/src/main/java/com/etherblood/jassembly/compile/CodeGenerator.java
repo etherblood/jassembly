@@ -348,6 +348,25 @@ public class CodeGenerator {
                 case RSHIFT:
                     context.getJassembly().rshift();
                     break;
+                case LESS_OR_EQUAL:
+                    context.getJassembly().dec();
+                case LESS_THAN:
+                    context.getJassembly().sub();
+                    context.getJassembly().toX0();
+                    context.getJassembly().signBit();
+                    context.getJassembly().and();
+                    context.getJassembly().any();
+                    break;
+                case GREATER_THAN:
+                    context.getJassembly().dec();
+                case GREATER_OR_EQUAL:
+                    context.getJassembly().sub();
+                    context.getJassembly().toX0();
+                    context.getJassembly().signBit();
+                    context.getJassembly().and();
+                    context.getJassembly().any();
+                    context.getJassembly().complement();
+                    break;
                 default:
                     throw new AssertionError(binary.getOperator());
             }

@@ -196,12 +196,15 @@ public class Parser {
             return parseFactor(tokens);
         }
         Expression a = parseExpression(precedence + 1, tokens);
-        TokenType type = tokens.peek().getType();
-        BinaryOperator operator = TOKEN_TO_BINARY_OPERATOR.get(type);
-        if (Arrays.asList(BINARY_OPERATOR_PRECEDENCE[precedence]).contains(operator)) {
+        while (true) {
+            TokenType type = tokens.peek().getType();
+            BinaryOperator operator = TOKEN_TO_BINARY_OPERATOR.get(type);
+            if (!Arrays.asList(BINARY_OPERATOR_PRECEDENCE[precedence]).contains(operator)) {
+                break;
+            }
             consume(tokens, type);
             Expression b = parseExpression(precedence + 1, tokens);
-            return new BinaryOperationExpression(a, operator, b);
+            a = new BinaryOperationExpression(a, operator, b);
         }
         return a;
     }
@@ -230,6 +233,7 @@ public class Parser {
             case LITERAL_BOOL:
                 boolean value = Boolean.valueOf(token.getValue());
                 return new ConstantExpression(value ? ~0 : 0);
+            case OP_NOT:
             case OP_COMPLEMENT: {
                 Expression inner = parseFactor(tokens);
                 return new UnaryOperationExpression(UnaryOperator.COMPLEMENT, inner);
