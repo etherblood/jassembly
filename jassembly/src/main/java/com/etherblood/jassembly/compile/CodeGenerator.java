@@ -241,6 +241,14 @@ public class CodeGenerator {
                 case NEGATE:
                     context.getJassembly().negate();
                     break;
+                case TO_BOOL:
+                    context.getJassembly().any();
+                    break;
+                case TO_INT:
+                    context.getJassembly().toX0();
+                    context.getJassembly().constant(1);
+                    context.getJassembly().and();
+                    break;
                 default:
                     throw new AssertionError(unary.getOperator());
             }

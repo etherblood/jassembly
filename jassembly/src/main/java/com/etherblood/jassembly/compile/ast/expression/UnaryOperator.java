@@ -6,5 +6,7 @@ package com.etherblood.jassembly.compile.ast.expression;
  */
 public enum UnaryOperator {
     COMPLEMENT,
-    NEGATE;
+    NEGATE,
+    TO_BOOL,
+    TO_INT;
 }

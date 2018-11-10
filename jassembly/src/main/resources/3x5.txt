@@ -11,7 +11,7 @@ int five() {
 }
 int mult(int a, int b) {
     int c = 0;
-    while(a != 0) {
+    while(bool(a)) {
         a = a - 1;
         c = c + b;
     }

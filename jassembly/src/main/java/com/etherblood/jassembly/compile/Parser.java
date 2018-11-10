@@ -34,7 +34,7 @@ import java.util.Map;
  * @author Philipp
  */
 public class Parser {
-    
+
     private static final BinaryOperator[][] BINARY_OPERATOR_PRECEDENCE = {
         {BinaryOperator.LAZY_OR},
         {BinaryOperator.LAZY_AND},
@@ -47,7 +47,7 @@ public class Parser {
         {BinaryOperator.ADD, BinaryOperator.SUB},
         {BinaryOperator.MULT, BinaryOperator.DIV, BinaryOperator.REMAINDER}};
     private static final Map<TokenType, BinaryOperator> TOKEN_TO_BINARY_OPERATOR = new EnumMap<>(TokenType.class);
-    
+
     static {
         TOKEN_TO_BINARY_OPERATOR.put(TokenType.OP_AND, BinaryOperator.AND);
         TOKEN_TO_BINARY_OPERATOR.put(TokenType.OP_DIVIDE, BinaryOperator.DIV);
@@ -192,149 +192,19 @@ public class Parser {
     }
 
     private Expression parseExpression(int precedence, ConsumableIterator<Token> tokens) {
-        if(precedence >= BINARY_OPERATOR_PRECEDENCE.length) {
+        if (precedence >= BINARY_OPERATOR_PRECEDENCE.length) {
             return parseFactor(tokens);
         }
         Expression a = parseExpression(precedence + 1, tokens);
         TokenType type = tokens.peek().getType();
         BinaryOperator operator = TOKEN_TO_BINARY_OPERATOR.get(type);
-        if(Arrays.asList(BINARY_OPERATOR_PRECEDENCE[precedence]).contains(operator)) {
+        if (Arrays.asList(BINARY_OPERATOR_PRECEDENCE[precedence]).contains(operator)) {
             consume(tokens, type);
             Expression b = parseExpression(precedence + 1, tokens);
             return new BinaryOperationExpression(a, operator, b);
         }
         return a;
     }
-
-//    private Expression parseOr(ConsumableIterator<Token> tokens) {
-//        Expression a = parseAnd(tokens);
-//        Token token = tokens.peek();
-//        BinaryOperator operator = null;
-//        switch (token.getType()) {
-//            case OP_OR:
-//                tokens.pop();
-//                operator = BinaryOperator.OR;
-//                break;
-//        }
-//        if (operator != null) {
-//            Expression b = parseAnd(tokens);
-//            return new BinaryOperationExpression(a, operator, b);
-//        }
-//        return a;
-//    }
-//
-//    private Expression parseAnd(ConsumableIterator<Token> tokens) {
-//        Expression a = parseEquality(tokens);
-//        Token token = tokens.peek();
-//        BinaryOperator operator = null;
-//        switch (token.getType()) {
-//            case OP_AND:
-//                tokens.pop();
-//                operator = BinaryOperator.AND;
-//                break;
-//        }
-//        if (operator != null) {
-//            Expression b = parseEquality(tokens);
-//            return new BinaryOperationExpression(a, operator, b);
-//        }
-//        return a;
-//    }
-//
-//    private Expression parseEquality(ConsumableIterator<Token> tokens) {
-//        Expression a = parseRelational(tokens);
-//        Token token = tokens.peek();
-//        BinaryOperator operator = null;
-//        switch (token.getType()) {
-//            case OP_EQUAL:
-//                tokens.pop();
-//                operator = BinaryOperator.EQUAL;
-//                break;
-//            case OP_NOTEQUAL:
-//                tokens.pop();
-//                operator = BinaryOperator.NOT_EQUAL;
-//                break;
-//        }
-//        if (operator != null) {
-//            Expression b = parseRelational(tokens);
-//            return new BinaryOperationExpression(a, operator, b);
-//        }
-//        return a;
-//    }
-//
-//    private Expression parseRelational(ConsumableIterator<Token> tokens) {
-//        Expression a = parseAdditive(tokens);
-//        Token token = tokens.peek();
-//        BinaryOperator operator = null;
-//        switch (token.getType()) {
-//            case OP_GREATER:
-//                tokens.pop();
-//                operator = BinaryOperator.GREATER_THAN;
-//                break;
-//            case OP_GREATEROREQUAL:
-//                tokens.pop();
-//                operator = BinaryOperator.GREATER_OR_EQUAL;
-//                break;
-//            case OP_LESS:
-//                tokens.pop();
-//                operator = BinaryOperator.LESS_THAN;
-//                break;
-//            case OP_LESSOREQUAL:
-//                tokens.pop();
-//                operator = BinaryOperator.LESS_OR_EQUAL;
-//                break;
-//        }
-//        if (operator != null) {
-//            Expression b = parseAdditive(tokens);
-//            return new BinaryOperationExpression(a, operator, b);
-//        }
-//        return a;
-//    }
-//
-//    private Expression parseAdditive(ConsumableIterator<Token> tokens) {
-//        Expression a = parseTerm(tokens);
-//        Token token = tokens.peek();
-//        BinaryOperator operator = null;
-//        switch (token.getType()) {
-//            case OP_PLUS:
-//                tokens.pop();
-//                operator = BinaryOperator.ADD;
-//                break;
-//            case OP_MINUS:
-//                tokens.pop();
-//                operator = BinaryOperator.SUB;
-//                break;
-//        }
-//        if (operator != null) {
-//            Expression b = parseTerm(tokens);
-//            return new BinaryOperationExpression(a, operator, b);
-//        }
-//        return a;
-//    }
-//
-//    private Expression parseTerm(ConsumableIterator<Token> tokens) {
-//        Expression a = parseFactor(tokens);
-//        Token token = tokens.peek();
-//        BinaryOperator operator = null;
-//        switch (token.getType()) {
-//            case OP_MULTIPLY:
-//                tokens.pop();
-//                operator = BinaryOperator.MULT;
-//                break;
-//            case OP_DIVIDE:
-//                tokens.pop();
-//                operator = BinaryOperator.DIV;
-//                break;
-//            case OP_REMAINDER:
-//                tokens.pop();
-//                operator = BinaryOperator.REMAINDER;
-//                break;
-//        }
-//        if (operator != null) {
-//            Expression b = parseFactor(tokens);
-//            return new BinaryOperationExpression(a, operator, b);
-//        }
-//        return a;
-//    }
 
     private Expression parseFactor(ConsumableIterator<Token> tokens) {
         Token token = tokens.pop();
@@ -368,10 +238,24 @@ public class Parser {
                 Expression inner = parseFactor(tokens);
                 return new UnaryOperationExpression(UnaryOperator.NEGATE, inner);
             }
-            case OPEN_PAREN:
-                Expression expression = parseExpression(tokens);
+            case OPEN_PAREN: {
+                Expression inner = parseExpression(tokens);
                 consume(tokens, TokenType.CLOSE_PAREN);
-                return expression;
+                return inner;
+            }
+            case KEYWORD_TYPE: {
+                consume(tokens, TokenType.OPEN_PAREN);
+                Expression inner = parseExpression(tokens);
+                consume(tokens, TokenType.CLOSE_PAREN);
+                switch (token.getValue()) {
+                    case "int":
+                        return new UnaryOperationExpression(UnaryOperator.TO_INT, inner);
+                    case "bool":
+                        return new UnaryOperationExpression(UnaryOperator.TO_BOOL, inner);
+                    default:
+                        throw new AssertionError(token.getValue());
+                }
+            }
             default:
                 throw new AssertionError(token);
         }
