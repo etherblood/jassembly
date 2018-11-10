@@ -195,18 +195,18 @@ public class Parser {
         if (precedence >= BINARY_OPERATOR_PRECEDENCE.length) {
             return parseFactor(tokens);
         }
+        List<BinaryOperator> precedenceOperators = Arrays.asList(BINARY_OPERATOR_PRECEDENCE[precedence]);
         Expression a = parseExpression(precedence + 1, tokens);
         while (true) {
             TokenType type = tokens.peek().getType();
             BinaryOperator operator = TOKEN_TO_BINARY_OPERATOR.get(type);
-            if (!Arrays.asList(BINARY_OPERATOR_PRECEDENCE[precedence]).contains(operator)) {
-                break;
+            if (!precedenceOperators.contains(operator)) {
+                return a;
             }
             consume(tokens, type);
             Expression b = parseExpression(precedence + 1, tokens);
             a = new BinaryOperationExpression(a, operator, b);
         }
-        return a;
     }
 
     private Expression parseFactor(ConsumableIterator<Token> tokens) {

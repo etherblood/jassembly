@@ -20,11 +20,19 @@ public class TestPrograms {
     private final SimpleCompiler compiler = new SimpleCompiler();
 
     @Test
+    public void _12x9() {
+        List<Integer> program = compiler.compile(loadFile("12x9.txt"));
+        long result = compute(program, 8, program.size() + 10);
+        assertEquals(108, result);
+    }
+    
+    @Test
     public void _3x5() {
         List<Integer> program = compiler.compile(loadFile("3x5.txt"));
         long result = compute(program, 8, program.size() + 20);
         assertEquals(15, result);
     }
+    
     @Test
     public void _128x2000() {
         List<Integer> program = compiler.compile(loadFile("128x2000.txt"));

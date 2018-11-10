@@ -130,9 +130,10 @@ public class CodeGenerator {
             IfElseStatement ifElse = (IfElseStatement) statement;
             expression(ifElse.getCondition(), context);
 
-            String ifBlock = "ifBody-" + UUID.randomUUID().toString();
-            String elseBlock = "elseBody-" + UUID.randomUUID().toString();
-            String end = "endif-" + UUID.randomUUID().toString();
+            UUID ifId = UUID.randomUUID();
+            String ifBlock = "ifBody-" + ifId;
+            String elseBlock = "elseBody-" + ifId;
+            String end = "endif-" + ifId;
 
             context.getJassembly().toX1();
             context.getJassembly().constant(ifBlock);
@@ -162,9 +163,10 @@ public class CodeGenerator {
         }
         if (statement instanceof WhileStatement) {
             WhileStatement whileStatement = (WhileStatement) statement;
-            String start = "whileHead-" + UUID.randomUUID().toString();
-            String body = "whileBody-" + UUID.randomUUID().toString();
-            String end = "endwhile-" + UUID.randomUUID().toString();
+            UUID whileId = UUID.randomUUID();
+            String start = "whileHead-" + whileId;
+            String body = "whileBody-" + whileId;
+            String end = "endwhile-" + whileId;
 
             context.getJassembly().labelNext(start);
             expression(whileStatement.getCondition(), context);
@@ -257,10 +259,11 @@ public class CodeGenerator {
         }
         if (expression instanceof BinaryOperationExpression) {
             BinaryOperationExpression binary = (BinaryOperationExpression) expression;
-            if(binary.getOperator() == BinaryOperator.LAZY_OR) {
-                String skip = "lazyOrSkip-" + UUID.randomUUID().toString();
-                String eval = "lazyOrEval-" + UUID.randomUUID().toString();
-                
+            if (binary.getOperator() == BinaryOperator.LAZY_OR) {
+                UUID lazyOrId = UUID.randomUUID();
+                String skip = "lazyOrSkip-" + lazyOrId;
+                String eval = "lazyOrEval-" + lazyOrId;
+
                 expression(binary.getA(), context);
                 context.getJassembly().toX1();
                 context.getJassembly().constant(skip);
@@ -275,19 +278,20 @@ public class CodeGenerator {
                 context.getJassembly().constant(eval);
                 context.getJassembly().xor();
                 context.getJassembly().jump();
-                
+
                 context.getJassembly().labelNext(eval);
                 expression(binary.getB(), context);
                 context.getJassembly().toX1();
-                
+
                 context.getJassembly().labelNext(skip);
                 context.getJassembly().fromX1();
                 return;
             }
-            if(binary.getOperator() == BinaryOperator.LAZY_AND) {
-                String skip = "lazyOrSkip-" + UUID.randomUUID().toString();
-                String eval = "lazyOrEval-" + UUID.randomUUID().toString();
-                
+            if (binary.getOperator() == BinaryOperator.LAZY_AND) {
+                UUID lazyAndId = UUID.randomUUID();
+                String skip = "lazyOrSkip-" + lazyAndId;
+                String eval = "lazyOrEval-" + lazyAndId;
+
                 expression(binary.getA(), context);
                 context.getJassembly().toX1();
                 context.getJassembly().constant(skip);
@@ -302,16 +306,16 @@ public class CodeGenerator {
                 context.getJassembly().constant(skip);
                 context.getJassembly().xor();
                 context.getJassembly().jump();
-                
+
                 context.getJassembly().labelNext(eval);
                 expression(binary.getB(), context);
                 context.getJassembly().toX1();
-                
+
                 context.getJassembly().labelNext(skip);
                 context.getJassembly().fromX1();
                 return;
             }
-            
+
             expression(binary.getA(), context);
             context.getJassembly().pushStack();
             expression(binary.getB(), context);
@@ -366,6 +370,74 @@ public class CodeGenerator {
                     context.getJassembly().and();
                     context.getJassembly().any();
                     context.getJassembly().complement();
+                    break;
+                case MULT:
+                    UUID multId = UUID.randomUUID();
+                    String multStart = "multStart-" + multId;
+                    String multBody = "multBody-" + multId;
+                    String multEnd = "multEnd-" + multId;
+                    
+                    context.getJassembly().toX1();
+                    context.getJassembly().fromSB();
+                    context.getJassembly().pushStack();
+
+                    context.getJassembly().constant(0);
+                    context.getJassembly().pushStack();
+
+                    context.getJassembly().fromX0();
+                    context.getJassembly().toSB();
+
+                    context.getJassembly().labelNext(multStart);
+                    context.getJassembly().constant(multBody);
+                    context.getJassembly().toX0();
+                    context.getJassembly().constant(multEnd);
+                    context.getJassembly().xor();
+                    context.getJassembly().toX0();
+
+                    context.getJassembly().fromSB();
+                    context.getJassembly().any();
+
+                    context.getJassembly().and();
+                    context.getJassembly().toX0();
+                    context.getJassembly().constant(multEnd);
+                    context.getJassembly().xor();
+                    context.getJassembly().jump();
+
+                    context.getJassembly().labelNext(multBody);
+                    context.getJassembly().constant(1);
+                    context.getJassembly().toX0();
+                    context.getJassembly().fromSB();
+                    context.getJassembly().and();
+                    context.getJassembly().any();
+                    context.getJassembly().toX0();
+                    context.getJassembly().fromX1();
+                    context.getJassembly().and();
+                    context.getJassembly().toX0();
+
+                    context.getJassembly().popStack();
+                    context.getJassembly().add();
+                    context.getJassembly().pushStack();
+
+                    context.getJassembly().constant(1);
+                    context.getJassembly().toX0();
+
+                    context.getJassembly().fromX1();
+                    context.getJassembly().lshift();
+                    context.getJassembly().toX1();
+
+                    context.getJassembly().fromSB();
+                    context.getJassembly().rshift();
+                    context.getJassembly().toSB();
+
+                    context.getJassembly().constant(multStart);
+                    context.getJassembly().jump();
+
+                    context.getJassembly().labelNext(multEnd);
+                    context.getJassembly().popStack();
+                    context.getJassembly().toX0();
+                    context.getJassembly().popStack();
+                    context.getJassembly().toSB();
+                    context.getJassembly().fromX0();
                     break;
                 default:
                     throw new AssertionError(binary.getOperator());

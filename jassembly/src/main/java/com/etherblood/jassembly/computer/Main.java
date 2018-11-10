@@ -45,7 +45,7 @@ public class Main {
         List<Integer> program_1 = multiplyProgram_1(a, b);
 
         ClassLoader classloader = Thread.currentThread().getContextClassLoader();
-        String sampleCode = new String(Files.readAllBytes(new File(classloader.getResource("fibonacci.txt").toURI()).toPath()));
+        String sampleCode = new String(Files.readAllBytes(new File(classloader.getResource("12x9.txt").toURI()).toPath()));
         List<Integer> program_2 = new SimpleCompiler().compile(sampleCode);
 
         int width = 8;
