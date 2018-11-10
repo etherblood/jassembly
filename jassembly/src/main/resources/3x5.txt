@@ -1,0 +1,19 @@
+int main() {
+    int a = three();
+    int b = 19;
+    return mult(five(), a);
+}
+bool three() {
+    return 3;
+}
+int five() {
+    return 2 + 3;
+}
+int mult(int a, int b) {
+    int c = 0;
+    while(a != 0) {
+        a = a - 1;
+        c = c + b;
+    }
+    return c;
+}

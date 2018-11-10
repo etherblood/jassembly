@@ -32,6 +32,10 @@ public class CodeGenerationContext {
         return new CodeGenerationContext(jassembly, vars.childContext(), loopStart, loopEnd);
     }
 
+    public CodeGenerationContext clearVars() {
+        return new CodeGenerationContext(jassembly, new VariablesContext(), loopStart, loopEnd);
+    }
+
     public Jassembly getJassembly() {
         return jassembly;
     }

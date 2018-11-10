@@ -103,6 +103,14 @@ public class Jassembly {
         add(simple(Command.XOR));
     }
 
+    public void lshift() {
+        add(simple(Command.LSHIFT));
+    }
+
+    public void rshift() {
+        add(simple(Command.RSHIFT));
+    }
+
     public void any() {
         add(simple(Command.ANY));
     }

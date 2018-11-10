@@ -24,7 +24,7 @@ public class Token {
 
     @Override
     public String toString() {
-        return String.format("(%s %s)", type.name(), value);
+        return String.format("%s('%s')", type.name(), value);
     }
 
     @Override

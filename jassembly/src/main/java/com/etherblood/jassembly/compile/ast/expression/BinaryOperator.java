@@ -20,5 +20,7 @@ public enum BinaryOperator {
     GREATER_OR_EQUAL,
     MULT,
     DIV,
-    REMAINDER;
+    REMAINDER,
+    LAZY_OR,
+    LAZY_AND;
 }

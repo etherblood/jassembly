@@ -30,14 +30,14 @@ public class CodeGenerator {
 
     public void generateCode(Program program, Jassembly jassembly) {
         CodeGenerationContext context = new CodeGenerationContext(jassembly);
-        call(new FunctionCallExpression("main"), context);
+        functionCall(new FunctionCallExpression("main"), context);
         jassembly.terminate();
         for (FunctionDeclaration function : program.getFunctions()) {
-            function(function, context);
+            functionDeclaration(function, context);
         }
     }
 
-    private void call(FunctionCallExpression call, CodeGenerationContext context) {
+    private void functionCall(FunctionCallExpression call, CodeGenerationContext context) {
         for (Expression argument : call.getArguments()) {
             expression(argument, context);
             context.getJassembly().pushStack();
@@ -49,17 +49,18 @@ public class CodeGenerator {
         }
     }
 
-    private void function(FunctionDeclaration function, CodeGenerationContext context) {
+    private void functionDeclaration(FunctionDeclaration function, CodeGenerationContext context) {
+        CodeGenerationContext child = context.clearVars();
         String[] parameters = function.getParameters();
         for (int i = parameters.length - 1; i >= 0; i--) {
-            context.getVars().declareParameter(parameters[i]);
+            child.getVars().declareParameter(parameters[i]);
         }
-        context.getJassembly().labelNext(function.getIdentifier());
-        context.getJassembly().fromSB();
-        context.getJassembly().pushStack();
-        context.getJassembly().fromSP();
-        context.getJassembly().toSB();
-        block(function.getBody(), context);
+        child.getJassembly().labelNext(function.getIdentifier());
+        child.getJassembly().fromSB();
+        child.getJassembly().pushStack();
+        child.getJassembly().fromSP();
+        child.getJassembly().toSB();
+        block(function.getBody(), child);
     }
 
     private void block(Block block, CodeGenerationContext context) {
@@ -211,7 +212,7 @@ public class CodeGenerator {
 
     private void expression(Expression expression, CodeGenerationContext context) {
         if (expression instanceof FunctionCallExpression) {
-            call((FunctionCallExpression) expression, context);
+            functionCall((FunctionCallExpression) expression, context);
             return;
         }
         if (expression instanceof VariableExpression) {
@@ -268,6 +269,24 @@ public class CodeGenerator {
                 case SUB:
                     context.getJassembly().sub();
                     break;
+                case OR:
+                    context.getJassembly().or();
+                    break;
+                case AND:
+                    context.getJassembly().and();
+                    break;
+                case XOR:
+                    context.getJassembly().xor();
+                    break;
+                case LSHIFT:
+                    context.getJassembly().lshift();
+                    break;
+                case RSHIFT:
+                    context.getJassembly().rshift();
+                    break;
+                case LAZY_OR:
+                case LAZY_AND:
+                    throw new UnsupportedOperationException("lazy operators currently not supported.");
                 default:
                     throw new AssertionError(binary.getOperator());
             }

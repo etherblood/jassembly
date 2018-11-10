@@ -9,6 +9,9 @@ import com.etherblood.jassembly.usability.codes.programs.Blocks;
 import com.etherblood.jassembly.usability.codes.programs.Commands;
 import com.etherblood.jassembly.usability.codes.programs.SimpleCommandConsumer;
 import com.etherblood.jassembly.usability.codes.programs.While;
+import java.io.File;
+import java.net.URISyntaxException;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,7 +24,7 @@ public class Main {
     /**
      * @param args the command line arguments
      */
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         int a = 13;
         int b = 6;
         {
@@ -41,21 +44,8 @@ public class Main {
         List<Integer> program_0 = multiplyProgram_0(a, b);
         List<Integer> program_1 = multiplyProgram_1(a, b);
 
-        String sampleCode = "{int main() {\n"
-                + "    int a = three();\n"
-                + "    int b = 19;\n"
-                + "    return mult(five(), a);\n"
-                + "}\n"
-                + "bool three() {return 3;}\n"
-                + "int five() {return 2 + 3;}\n"
-                + "int mult(int a, int b) {\n"
-                + "    int c = 0;\n"
-                + "    while(a != 0) {\n"
-                + "        a = a - 1;\n"
-                + "        c = c + b;\n"
-                + "    }\n"
-                + "    return c;\n"
-                + "}}";
+        ClassLoader classloader = Thread.currentThread().getContextClassLoader();
+        String sampleCode = new String(Files.readAllBytes(new File(classloader.getResource("fibonacci.txt").toURI()).toPath()));
         List<Integer> program_2 = new SimpleCompiler().compile(sampleCode);
 
         int width = 16;
