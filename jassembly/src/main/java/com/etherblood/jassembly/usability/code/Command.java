@@ -1,6 +1,6 @@
-package com.etherblood.jassembly.usability.codes;
+package com.etherblood.jassembly.usability.code;
 
-import static com.etherblood.jassembly.usability.codes.ControlSignals.*;
+import static com.etherblood.jassembly.usability.code.ControlSignals.*;
 
 /**
  *

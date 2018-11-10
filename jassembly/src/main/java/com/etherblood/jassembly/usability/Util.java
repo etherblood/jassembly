@@ -12,7 +12,7 @@ public class Util {
     
     public static int floorLog(int bits) {
         if (bits == 0) {
-            return 0; // or throw exception
+            throw new IllegalArgumentException();
         }
         return 31 - Integer.numberOfLeadingZeros(bits);
     }

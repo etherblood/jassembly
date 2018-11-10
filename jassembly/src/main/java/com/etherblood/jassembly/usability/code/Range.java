@@ -1,4 +1,4 @@
-package com.etherblood.jassembly.usability.codes;
+package com.etherblood.jassembly.usability.code;
 
 /**
  *

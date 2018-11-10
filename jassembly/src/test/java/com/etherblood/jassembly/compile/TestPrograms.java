@@ -2,7 +2,7 @@ package com.etherblood.jassembly.compile;
 
 import com.etherblood.jassembly.computer.Computer;
 import com.etherblood.jassembly.core.Engine;
-import com.etherblood.jassembly.usability.codes.Command;
+import com.etherblood.jassembly.usability.code.Command;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;

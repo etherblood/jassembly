@@ -1,6 +1,6 @@
 package com.etherblood.jassembly.compile.jassembly;
 
-import com.etherblood.jassembly.usability.codes.Command;
+import com.etherblood.jassembly.usability.code.Command;
 import java.util.List;
 
 public class SimpleCommand extends JassemblyCommand {
