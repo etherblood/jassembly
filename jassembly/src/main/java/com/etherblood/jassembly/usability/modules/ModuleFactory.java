@@ -303,7 +303,16 @@ public class ModuleFactory {
             if(bit < Util.ceilLog(words)) {
                 address[bit] = combine(mux.getIn(words * width + bit), demux.getIn(width + 1 + bit));
             } else {
-                address[bit] = inA(new NandGate());//TODO: remove unused inputs
+                address[bit] = new WireReference() {
+                    @Override
+                    public Wire getWire() {
+                        throw new UnsupportedOperationException();
+                    }
+
+                    @Override
+                    public void setWire(Wire wire) {
+                    }
+                };
             }
         }
         return new MemoryModule(

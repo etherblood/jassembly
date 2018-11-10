@@ -55,9 +55,6 @@ public class TestPrograms {
     }
     
     private static long compute(List<Integer> program, int width, int ram) {
-        if(1 << width < ram) {
-            throw new AssertionError("wordsize too small to address full RAM.");
-        }
         Computer computer = new Computer(width, program, ram);
         Engine engine = new Engine();
         while (computer.command.getSignals().getAsLong() != Command.TERMINATE.ordinal()) {

@@ -10,7 +10,6 @@ import com.etherblood.jassembly.usability.codes.programs.Commands;
 import com.etherblood.jassembly.usability.codes.programs.SimpleCommandConsumer;
 import com.etherblood.jassembly.usability.codes.programs.While;
 import java.io.File;
-import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
@@ -49,7 +48,8 @@ public class Main {
         List<Integer> program_2 = new SimpleCompiler().compile(sampleCode);
 
         int width = 8;
-        Computer computer = new Computer(width, program_2, 1000);
+        Computer computer = new Computer(width, program_2, 256);
+        System.out.println("Computer built from " + computer.countGates() + " nands.");
         printState(computer);
         Engine engine = new Engine();
         while (computer.command.getSignals().getAsLong() != Command.TERMINATE.ordinal()) {

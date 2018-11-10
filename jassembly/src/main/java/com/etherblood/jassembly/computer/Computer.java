@@ -52,14 +52,19 @@ public class Computer {
     public final Wire clockWire = Wire.off();
     public final Wire writeWire = Wire.off();
 
-    public Computer(int width, List<Integer> program, int maxRam) {
-        assert Integer.bitCount(width) == 1;
+    public Computer(int width, List<Integer> program, int ramWords) {
+        if(Integer.bitCount(width) != 1) {
+            throw new IllegalArgumentException("wordsize must be a power of 2.");
+        }
+        if(1 << width < ramWords) {
+            throw new IllegalArgumentException("wordsize too small to address full RAM.");
+        }
         int depth = Util.floorLog(width);
         int registersAddressWidth = ControlSignals.R0_ADR.length;
         int operatorsAddressWidth = ControlSignals.OP_ADR.length;
         ModuleFactory factory = new ModuleFactory();
 
-        ram = factory.ram(width, maxRam);
+        ram = factory.ram(width, ramWords);
         adder = factory.rippleCarryAdder(width);
         rshift = factory.logicalRightShift(width, depth);
         lu = factory.logicUnit(width);
@@ -88,7 +93,7 @@ public class Computer {
         modWrite = factory.signalModifier(width);
         ramAnd = factory.and();
 
-        for (int i = 0; i < maxRam; i++) {
+        for (int i = 0; i < ramWords; i++) {
             ram.getSignals().subRange(i * width, width).set(Command.WAIT.ordinal());
         }
         int nextLine = 0;
@@ -96,8 +101,8 @@ public class Computer {
             ram.getSignals().subRange(nextLine++ * width, width).set(lineCode);
         }
         command.getSignals().set(Command.LOAD_CMD.ordinal());
-        sp.getSignals().set(maxRam);
-        sb.getSignals().set(maxRam);
+        sp.getSignals().set(ramWords);
+        sb.getSignals().set(ramWords);
 
         //TODO: below is workaround for stability issues...
         Engine engine = new Engine();
@@ -219,33 +224,18 @@ public class Computer {
         command.getIn(width).setWire(clockWire);
     }
 
+    private List<SimpleModule> modules() {
+        return Arrays.asList(ram, adder, acc, pc, pcInc, pcMux, command, commandDecodeMux, commandMux, noop, x0, x1, sb, sp, busDemuxRead0, busDemuxRead1, busDemuxWrite, busMuxRead0, busMuxRead1, busMuxWrite, modRead0, modWrite, rshift, lu, opArgDemux, ramAnd);
+    }
+
     private void quiet(Engine engine) {
-        engine.activate(quiet(ram).getGates());
-        engine.activate(quiet(adder).getGates());
-        engine.activate(quiet(acc).getGates());
-        engine.activate(quiet(pc).getGates());
-        engine.activate(quiet(pcInc).getGates());
-        engine.activate(quiet(pcMux).getGates());
-        engine.activate(quiet(command).getGates());
-        engine.activate(quiet(commandDecodeMux).getGates());
-        engine.activate(quiet(commandMux).getGates());
-        engine.activate(quiet(noop).getGates());
-        engine.activate(quiet(x0).getGates());
-        engine.activate(quiet(x1).getGates());
-        engine.activate(quiet(sb).getGates());
-        engine.activate(quiet(sp).getGates());
-        engine.activate(quiet(busDemuxRead0).getGates());
-        engine.activate(quiet(busDemuxRead1).getGates());
-        engine.activate(quiet(busDemuxWrite).getGates());
-        engine.activate(quiet(busMuxRead0).getGates());
-        engine.activate(quiet(busMuxRead1).getGates());
-        engine.activate(quiet(busMuxWrite).getGates());
-        engine.activate(quiet(modRead0).getGates());
-        engine.activate(quiet(modWrite).getGates());
-        engine.activate(quiet(rshift).getGates());
-        engine.activate(quiet(lu).getGates());
-        engine.activate(quiet(opArgDemux).getGates());
-        engine.activate(quiet(ramAnd).getGates());
+        for (SimpleModule module : modules()) {
+            engine.activate(quiet(module).getGates());
+        }
+    }
+
+    public int countGates() {
+        return modules().stream().mapToInt(x -> x.getGates().length).sum();
     }
 
     private static <T extends SimpleModule> T quiet(T mod) {//probably obsolete?
