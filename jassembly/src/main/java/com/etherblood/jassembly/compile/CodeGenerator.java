@@ -6,6 +6,7 @@ import com.etherblood.jassembly.compile.ast.statement.block.Block;
 import com.etherblood.jassembly.compile.ast.statement.block.BlockItem;
 import com.etherblood.jassembly.compile.ast.statement.ReturnStatement;
 import com.etherblood.jassembly.compile.ast.expression.BinaryOperationExpression;
+import com.etherblood.jassembly.compile.ast.expression.BinaryOperator;
 import com.etherblood.jassembly.compile.ast.expression.ConstantExpression;
 import com.etherblood.jassembly.compile.ast.expression.Expression;
 import com.etherblood.jassembly.compile.ast.expression.FunctionCallExpression;
@@ -256,6 +257,61 @@ public class CodeGenerator {
         }
         if (expression instanceof BinaryOperationExpression) {
             BinaryOperationExpression binary = (BinaryOperationExpression) expression;
+            if(binary.getOperator() == BinaryOperator.LAZY_OR) {
+                String skip = "lazyOrSkip-" + UUID.randomUUID().toString();
+                String eval = "lazyOrEval-" + UUID.randomUUID().toString();
+                
+                expression(binary.getA(), context);
+                context.getJassembly().toX1();
+                context.getJassembly().constant(skip);
+                context.getJassembly().toX0();
+                context.getJassembly().constant(eval);
+                context.getJassembly().xor();
+                context.getJassembly().toX0();
+
+                context.getJassembly().fromX1();
+                context.getJassembly().and();
+                context.getJassembly().toX0();
+                context.getJassembly().constant(eval);
+                context.getJassembly().xor();
+                context.getJassembly().jump();
+                
+                context.getJassembly().labelNext(eval);
+                expression(binary.getB(), context);
+                context.getJassembly().toX1();
+                
+                context.getJassembly().labelNext(skip);
+                context.getJassembly().fromX1();
+                return;
+            }
+            if(binary.getOperator() == BinaryOperator.LAZY_AND) {
+                String skip = "lazyOrSkip-" + UUID.randomUUID().toString();
+                String eval = "lazyOrEval-" + UUID.randomUUID().toString();
+                
+                expression(binary.getA(), context);
+                context.getJassembly().toX1();
+                context.getJassembly().constant(skip);
+                context.getJassembly().toX0();
+                context.getJassembly().constant(eval);
+                context.getJassembly().xor();
+                context.getJassembly().toX0();
+
+                context.getJassembly().fromX1();
+                context.getJassembly().and();
+                context.getJassembly().toX0();
+                context.getJassembly().constant(skip);
+                context.getJassembly().xor();
+                context.getJassembly().jump();
+                
+                context.getJassembly().labelNext(eval);
+                expression(binary.getB(), context);
+                context.getJassembly().toX1();
+                
+                context.getJassembly().labelNext(skip);
+                context.getJassembly().fromX1();
+                return;
+            }
+            
             expression(binary.getA(), context);
             context.getJassembly().pushStack();
             expression(binary.getB(), context);
@@ -292,9 +348,6 @@ public class CodeGenerator {
                 case RSHIFT:
                     context.getJassembly().rshift();
                     break;
-                case LAZY_OR:
-                case LAZY_AND:
-                    throw new UnsupportedOperationException("lazy operators currently not supported.");
                 default:
                     throw new AssertionError(binary.getOperator());
             }
