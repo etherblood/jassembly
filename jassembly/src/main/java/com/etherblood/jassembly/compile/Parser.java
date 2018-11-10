@@ -15,6 +15,7 @@ import com.etherblood.jassembly.compile.ast.expression.UnaryOperator;
 import com.etherblood.jassembly.compile.ast.expression.VariableExpression;
 import com.etherblood.jassembly.compile.ast.statement.AssignStatement;
 import com.etherblood.jassembly.compile.ast.statement.BreakStatement;
+import com.etherblood.jassembly.compile.ast.statement.ContinueStatement;
 import com.etherblood.jassembly.compile.ast.statement.block.VariableDeclaration;
 import com.etherblood.jassembly.compile.ast.statement.ExpressionStatement;
 import com.etherblood.jassembly.compile.ast.statement.IfElseStatement;
@@ -178,7 +179,7 @@ public class Parser {
                 return new BreakStatement();
             case KEYWORD_CONTINUE:
                 consume(tokens, TokenType.KEYWORD_CONTINUE, TokenType.SEMICOLON);
-                return new BreakStatement();
+                return new ContinueStatement();
             default: {
                 Expression expression = parseExpression(tokens);
                 consume(tokens, TokenType.SEMICOLON);

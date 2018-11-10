@@ -41,6 +41,13 @@ public class TestPrograms {
     }
 
     @Test
+    public void loop() {
+        List<Integer> program = compiler.compile(loadFile("loop.txt"));
+        long result = compute(program, 8, program.size() + 50);
+        assertEquals(0, result);
+    }
+
+    @Test
     public void fibonacci() {
         List<Integer> program = compiler.compile(loadFile("fibonacci.txt"));
         long result = compute(program, 8, program.size() + 50);

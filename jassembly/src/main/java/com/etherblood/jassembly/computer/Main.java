@@ -20,7 +20,7 @@ public class Main {
      * @param args the command line arguments
      */
     public static void main(String[] args) throws Exception {
-        String sourceFile = "12x9.txt";
+        String sourceFile = "loop.txt";
         String sampleCode = readFile(sourceFile);
         List<Integer> program = new SimpleCompiler().compile(sampleCode);
 

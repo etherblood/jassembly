@@ -1,6 +1,5 @@
 package com.etherblood.jassembly.usability.signals;
 
-import java.util.Arrays;
 import java.util.BitSet;
 import javax.xml.bind.DatatypeConverter;
 
