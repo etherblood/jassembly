@@ -16,14 +16,8 @@ public class LabelLiteralCommand extends JassemblyCommand {
     }
 
     @Override
-    public int toCode(List<JassemblyCommand> contextCommands) {
-        for (int i = 0; i < contextCommands.size(); i++) {
-            JassemblyCommand command = contextCommands.get(i);
-            if (command.getLabels().contains(label)) {
-                return i;
-            }
-        }
-        throw new IllegalStateException(label + " not found.");
+    public int toCode(JassemblyContext context) {
+        return context.resolveLabel(label);
     }
 
     @Override

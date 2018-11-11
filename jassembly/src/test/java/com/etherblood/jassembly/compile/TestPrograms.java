@@ -2,7 +2,7 @@ package com.etherblood.jassembly.compile;
 
 import com.etherblood.jassembly.computer.Computer;
 import com.etherblood.jassembly.core.Engine;
-import com.etherblood.jassembly.usability.code.Command;
+import com.etherblood.jassembly.usability.code.Instruction;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -64,7 +64,7 @@ public class TestPrograms {
     private static long compute(List<Integer> program, int width, int ram) {
         Computer computer = new Computer(width, program, ram);
         Engine engine = new Engine();
-        while (computer.command.getSignals().getAsLong() != Command.TERMINATE.ordinal()) {
+        while (computer.command.getSignals().getAsLong() != Instruction.TERMINATE.ordinal()) {
             advanceCycle(computer, engine);
         }
         return computer.acc.getSignals().getAsLong();

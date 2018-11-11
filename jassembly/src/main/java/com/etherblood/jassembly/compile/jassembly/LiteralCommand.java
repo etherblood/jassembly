@@ -1,7 +1,5 @@
 package com.etherblood.jassembly.compile.jassembly;
 
-import java.util.List;
-
 public class LiteralCommand extends JassemblyCommand {
 
     private final int value;
@@ -15,7 +13,7 @@ public class LiteralCommand extends JassemblyCommand {
     }
 
     @Override
-    public int toCode(List<JassemblyCommand> contextCommands) {
+    public int toCode(JassemblyContext context) {
         return value;
     }
 

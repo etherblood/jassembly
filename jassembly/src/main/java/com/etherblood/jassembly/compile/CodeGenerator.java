@@ -41,12 +41,12 @@ public class CodeGenerator {
     private void functionCall(FunctionCallExpression call, CodeGenerationContext context) {
         for (Expression argument : call.getArguments()) {
             expression(argument, context);
-            context.getJassembly().pushStack();
+            context.getJassembly().stackPush();
         }
         context.getJassembly().call(call.getName());
         context.getJassembly().fromX1();//move result (stored in x1) to acc
         for (Expression argument : call.getArguments()) {
-            context.getJassembly().delStack();
+            context.getJassembly().stackDel();
         }
     }
 
@@ -58,7 +58,7 @@ public class CodeGenerator {
         }
         child.getJassembly().labelNext(function.getIdentifier());
         child.getJassembly().fromSB();
-        child.getJassembly().pushStack();
+        child.getJassembly().stackPush();
         child.getJassembly().fromSP();
         child.getJassembly().toSB();
         block(function.getBody(), child);
@@ -71,7 +71,7 @@ public class CodeGenerator {
         }
         int innerVars = child.getVars().varCount() - context.getVars().varCount();
         for (int i = 0; i < innerVars; i++) {
-            context.getJassembly().delStack();
+            context.getJassembly().stackDel();
         }
     }
 
@@ -88,7 +88,7 @@ public class CodeGenerator {
             } else {
                 context.getJassembly().constant(0);
             }
-            context.getJassembly().pushStack();
+            context.getJassembly().stackPush();
             return;
         }
         throw new UnsupportedOperationException(blockItem.toString());
@@ -108,7 +108,7 @@ public class CodeGenerator {
             context.getJassembly().toX0();
 
             context.getJassembly().fromX1();
-            context.getJassembly().writeRam();
+            context.getJassembly().ramWrite();
             return;
         }
         if (statement instanceof ExpressionStatement) {
@@ -120,7 +120,7 @@ public class CodeGenerator {
             context.getJassembly().toX1();
             context.getJassembly().fromSB();
             context.getJassembly().toSP();
-            context.getJassembly().popStack();
+            context.getJassembly().stackPop();
             context.getJassembly().toSB();
             context.getJassembly().ret();
             //result is in x1
@@ -227,7 +227,7 @@ public class CodeGenerator {
             context.getJassembly().add();
             context.getJassembly().toX0();
 
-            context.getJassembly().readRam();
+            context.getJassembly().ramRead();
             return;
         }
         if (expression instanceof ConstantExpression) {
@@ -317,10 +317,10 @@ public class CodeGenerator {
             }
 
             expression(binary.getA(), context);
-            context.getJassembly().pushStack();
+            context.getJassembly().stackPush();
             expression(binary.getB(), context);
             context.getJassembly().toX0();
-            context.getJassembly().popStack();
+            context.getJassembly().stackPop();
             switch (binary.getOperator()) {
                 case EQUAL:
                     context.getJassembly().xor();
@@ -379,10 +379,10 @@ public class CodeGenerator {
                     
                     context.getJassembly().toX1();
                     context.getJassembly().fromSB();
-                    context.getJassembly().pushStack();
+                    context.getJassembly().stackPush();
 
                     context.getJassembly().constant(0);
-                    context.getJassembly().pushStack();
+                    context.getJassembly().stackPush();
 
                     context.getJassembly().fromX0();
                     context.getJassembly().toSB();
@@ -414,9 +414,9 @@ public class CodeGenerator {
                     context.getJassembly().and();
                     context.getJassembly().toX0();
 
-                    context.getJassembly().popStack();
+                    context.getJassembly().stackPop();
                     context.getJassembly().add();
-                    context.getJassembly().pushStack();
+                    context.getJassembly().stackPush();
 
                     context.getJassembly().constant(1);
                     context.getJassembly().toX0();
@@ -433,9 +433,9 @@ public class CodeGenerator {
                     context.getJassembly().jump();
 
                     context.getJassembly().labelNext(multEnd);
-                    context.getJassembly().popStack();
+                    context.getJassembly().stackPop();
                     context.getJassembly().toX0();
-                    context.getJassembly().popStack();
+                    context.getJassembly().stackPop();
                     context.getJassembly().toSB();
                     context.getJassembly().fromX0();
                     break;

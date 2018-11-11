@@ -1,6 +1,6 @@
 package com.etherblood.jassembly.compile.jassembly;
 
-import com.etherblood.jassembly.usability.code.Command;
+import com.etherblood.jassembly.usability.code.Instruction;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -14,17 +14,6 @@ public class Jassembly {
     private final List<JassemblyCommand> commands = new ArrayList<>();
     private final List<String> pendingLabels = new ArrayList<>();
 
-    public List<Integer> toProgram() {
-        if (!pendingLabels.isEmpty()) {
-            noop();
-        }
-        List<Integer> program = new ArrayList<>();
-        for (JassemblyCommand command : commands) {
-            program.add(command.toCode(commands));
-        }
-        return program;
-    }
-
     public void labelNext(String label) {
         pendingLabels.add(label);
     }
@@ -32,147 +21,147 @@ public class Jassembly {
     public void call(String function) {
         String returnLabel = "return-" + UUID.randomUUID().toString();
         constant(returnLabel);
-        pushStack();
+        stackPush();
         constant(function);
         jump();
         labelNext(returnLabel);
     }
 
     public void ret() {
-        popStack();
+        stackPop();
         jump();
     }
 
     public void noop() {
-        add(simple(Command.WAIT));
+        add(simple(Instruction.WAIT));
     }
 
     public void jump() {
-        add(simple(Command.JUMP));
+        add(simple(Instruction.JUMP));
     }
 
     public void toX0() {
-        add(simple(Command.TO_X0));
+        add(simple(Instruction.TO_X0));
     }
 
     public void toX1() {
-        add(simple(Command.TO_X1));
+        add(simple(Instruction.TO_X1));
     }
 
     public void toSB() {
-        add(simple(Command.TO_SB));
+        add(simple(Instruction.TO_SB));
     }
 
     public void toSP() {
-        add(simple(Command.TO_SP));
+        add(simple(Instruction.TO_SP));
     }
 
     public void fromX0() {
-        add(simple(Command.FROM_X0));
+        add(simple(Instruction.FROM_X0));
     }
 
     public void fromX1() {
-        add(simple(Command.FROM_X1));
+        add(simple(Instruction.FROM_X1));
     }
 
     public void fromSB() {
-        add(simple(Command.FROM_SB));
+        add(simple(Instruction.FROM_SB));
     }
 
     public void fromSP() {
-        add(simple(Command.FROM_SP));
+        add(simple(Instruction.FROM_SP));
     }
 
     public void add() {
-        add(simple(Command.ADD));
+        add(simple(Instruction.ADD));
     }
 
     public void sub() {
-        add(simple(Command.SUB));
+        add(simple(Instruction.SUB));
     }
 
     public void and() {
-        add(simple(Command.AND));
+        add(simple(Instruction.AND));
     }
 
     public void or() {
-        add(simple(Command.OR));
+        add(simple(Instruction.OR));
     }
 
     public void xor() {
-        add(simple(Command.XOR));
+        add(simple(Instruction.XOR));
     }
 
     public void lshift() {
-        add(simple(Command.LSHIFT));
+        add(simple(Instruction.LSHIFT));
     }
 
     public void rshift() {
-        add(simple(Command.RSHIFT));
+        add(simple(Instruction.RSHIFT));
     }
 
     public void any() {
-        add(simple(Command.ANY));
+        add(simple(Instruction.ANY));
     }
 
     public void inc() {
-        add(simple(Command.INC));
+        add(simple(Instruction.INC));
     }
 
     public void dec() {
-        add(simple(Command.DEC));
+        add(simple(Instruction.DEC));
     }
 
     public void signBit() {
-        add(simple(Command.SIGN_BIT));
+        add(simple(Instruction.SIGN_BIT));
     }
 
     public void negate() {
-        add(simple(Command.INVERT));
-        add(simple(Command.INC));
+        add(simple(Instruction.INVERT));
+        add(simple(Instruction.INC));
     }
 
     public void complement() {
-        add(simple(Command.INVERT));
+        add(simple(Instruction.INVERT));
     }
 
     public void constant(String label) {
-        add(simple(Command.LOAD_CONST));
+        add(simple(Instruction.LOAD_CONST));
         add(labelLiteral(label));
     }
 
     public void constant(int value) {
-        add(simple(Command.LOAD_CONST));
+        add(simple(Instruction.LOAD_CONST));
         add(literal(value));
     }
 
-    public void delStack() {
-        add(simple(Command.INC_STACK));
+    public void stackDel() {
+        add(simple(Instruction.INC_STACK));
     }
 
-    public void popStack() {
-        add(simple(Command.READ_STACK));
-        add(simple(Command.INC_STACK));
+    public void stackPop() {
+        add(simple(Instruction.READ_STACK));
+        add(simple(Instruction.INC_STACK));
     }
 
-    public void pushStack() {
-        add(simple(Command.DEC_STACK));
-        add(simple(Command.WRITE_STACK));
+    public void stackPush() {
+        add(simple(Instruction.DEC_STACK));
+        add(simple(Instruction.WRITE_STACK));
     }
 
-    public void readRam() {
-        add(simple(Command.READ));
+    public void ramRead() {
+        add(simple(Instruction.READ));
     }
 
-    public void writeRam() {
-        add(simple(Command.WRITE));
+    public void ramWrite() {
+        add(simple(Instruction.WRITE));
     }
 
     public void terminate() {
-        add(simple(Command.TERMINATE));
+        add(simple(Instruction.TERMINATE));
     }
 
-    public void nativeCommand(Command command) {
+    public void nativeCommand(Instruction command) {
         add(simple(command));
     }
 
@@ -186,7 +175,7 @@ public class Jassembly {
         commands.add(command);
     }
 
-    private static JassemblyCommand simple(Command command) {
+    private static JassemblyCommand simple(Instruction command) {
         return new SimpleCommand(command);
     }
 

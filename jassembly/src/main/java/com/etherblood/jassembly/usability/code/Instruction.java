@@ -6,7 +6,7 @@ import static com.etherblood.jassembly.usability.code.ControlSignals.*;
  *
  * @author Philipp
  */
-public enum Command {
+public enum Instruction {
     WAIT(0L),
     LOAD_CMD(set(OP_ADR, RAM_ADR) | set(R1_ADR, PC_ADR) | set(W_ADR, CMD_ADR) | set(PC_INC, 1)),
     LOAD_CONST(set(OP_ADR, RAM_ADR) | set(R1_ADR, PC_ADR) | set(W_ADR, ACC_ADR) | set(PC_INC, 1)),
@@ -43,7 +43,7 @@ public enum Command {
 
     private final long controlSignals;
 
-    private Command(long controlSignals) {
+    private Instruction(long controlSignals) {
         this.controlSignals = controlSignals;
     }
 

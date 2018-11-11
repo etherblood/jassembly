@@ -4,7 +4,7 @@ import com.etherblood.jassembly.core.Engine;
 import static com.etherblood.jassembly.usability.BusUtil.*;
 import com.etherblood.jassembly.core.Wire;
 import com.etherblood.jassembly.usability.Util;
-import com.etherblood.jassembly.usability.code.Command;
+import com.etherblood.jassembly.usability.code.Instruction;
 import com.etherblood.jassembly.usability.code.ControlSignals;
 import com.etherblood.jassembly.usability.modules.MemoryModule;
 import com.etherblood.jassembly.usability.modules.ModuleFactory;
@@ -80,7 +80,7 @@ public class Computer {
         pcMux = factory.multiplexer(width);
         command = factory.msFlipFlop(width);
         commandMux = factory.multiplexer(width);
-        commandDecodeMux = factory.mux(ControlSignals.SIGNAL_BITS, Command.values().length);
+        commandDecodeMux = factory.mux(ControlSignals.SIGNAL_BITS, Instruction.values().length);
 
         busMuxRead0 = factory.multiplexer(width, registersAddressWidth);
         busDemuxRead0 = factory.demultiplexer(width, operatorsAddressWidth);
@@ -94,13 +94,13 @@ public class Computer {
         ramAnd = factory.and();
 
         for (int i = 0; i < ramWords; i++) {
-            ram.getSignals().subRange(i * width, width).set(Command.WAIT.ordinal());
+            ram.getSignals().subRange(i * width, width).set(Instruction.WAIT.ordinal());
         }
         int nextLine = 0;
         for (int lineCode : program) {
             ram.getSignals().subRange(nextLine++ * width, width).set(lineCode);
         }
-        command.getSignals().set(Command.LOAD_CMD.ordinal());
+        command.getSignals().set(Instruction.LOAD_CMD.ordinal());
         sp.getSignals().set(ramWords);
         sb.getSignals().set(ramWords);
 
@@ -113,7 +113,7 @@ public class Computer {
     }
 
     private void connectWires(int width, int depth) {
-        Command[] commands = Command.values();
+        Instruction[] commands = Instruction.values();
         int registersAddressWidth = ControlSignals.R0_ADR.length;
         int operatorsAddressWidth = ControlSignals.OP_ADR.length;
         List<WireReference>[] registerInputs = new List[]{
@@ -178,7 +178,7 @@ public class Computer {
         lu.getIn(2 * width + 1).setWire(opArgDemux.getOut(ControlSignals.LU_ADR * ControlSignals.OP_ARG.length + 1));
 
         connect(commandMux, 0, command, 0, width);
-        setInput(commandMux, 0, width, Command.LOAD_CMD.ordinal());
+        setInput(commandMux, 0, width, Instruction.LOAD_CMD.ordinal());
         connect(pcInc, 0, pc, 0, width);
         connect(pc, 0, pcMux, 0, width);
         connect(pcMux, 0, pcInc, 0, width);
@@ -216,7 +216,7 @@ public class Computer {
             controlSignals.get(i).setWire(commandDecodeMux.getOut(i));
         }
         for (int i = 0; i < commands.length; i++) {
-            Command cmd = commands[i];
+            Instruction cmd = commands[i];
             setInput(commandDecodeMux, i * ControlSignals.SIGNAL_BITS, ControlSignals.SIGNAL_BITS, cmd.getControlSignals());
         }
 

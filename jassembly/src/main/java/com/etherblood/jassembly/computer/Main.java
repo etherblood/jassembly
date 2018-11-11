@@ -3,7 +3,7 @@ package com.etherblood.jassembly.computer;
 import com.etherblood.jassembly.compile.SimpleCompiler;
 import com.etherblood.jassembly.core.Engine;
 import com.etherblood.jassembly.usability.signals.SignalRange;
-import com.etherblood.jassembly.usability.code.Command;
+import com.etherblood.jassembly.usability.code.Instruction;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -31,7 +31,7 @@ public class Main {
         System.out.println();
         printState(computer);
         Engine engine = new Engine();
-        while (computer.command.getSignals().getAsLong() != Command.TERMINATE.ordinal()) {
+        while (computer.command.getSignals().getAsLong() != Instruction.TERMINATE.ordinal()) {
             advanceCycle(computer, engine);
             printState(computer);
         }
@@ -72,7 +72,7 @@ public class Main {
         SignalRange currentCommand = computer.command.getSignals();
         System.out.println("ram: " + computer.ram.getSignals().toHexStrig());
         System.out.println("pc: " + computer.pc.getSignals().toHexStrig() + " (" + computer.pc.getSignals().getAsLong() + ")");
-        System.out.println("cmd: " + currentCommand.toHexStrig() + " (" + Command.values()[(int) currentCommand.getAsLong()] + ")");
+        System.out.println("cmd: " + currentCommand.toHexStrig() + " (" + Instruction.values()[(int) currentCommand.getAsLong()] + ")");
         System.out.println("ac: " + computer.acc.getSignals().toHexStrig() + " (" + computer.acc.getSignals().getAsLong() + ")");
         System.out.println("x0: " + computer.x0.getSignals().toHexStrig() + " (" + computer.x0.getSignals().getAsLong() + ")");
         System.out.println("x1: " + computer.x1.getSignals().toHexStrig() + " (" + computer.x1.getSignals().getAsLong() + ")");
