@@ -1,13 +1,14 @@
 package com.etherblood.jassembly.compile.jassembly;
 
+import com.etherblood.jassembly.compile.jassembly.JassemblyContext;
 import java.util.List;
 import java.util.Objects;
 
-public class LabelLiteralCommand extends JassemblyCommand {
+public class LabelledLabel extends Labelled {
 
     private final String label;
 
-    public LabelLiteralCommand(String label) {
+    public LabelledLabel(String label) {
         this.label = Objects.requireNonNull(label);
     }
 

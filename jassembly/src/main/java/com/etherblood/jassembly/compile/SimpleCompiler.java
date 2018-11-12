@@ -2,7 +2,7 @@ package com.etherblood.jassembly.compile;
 
 import com.etherblood.jassembly.compile.ast.Program;
 import com.etherblood.jassembly.compile.jassembly.Jassembly;
-import com.etherblood.jassembly.compile.jassembly.JassemblyCommand;
+import com.etherblood.jassembly.compile.jassembly.Labelled;
 import com.etherblood.jassembly.compile.jassembly.JassemblyCompiler;
 import com.etherblood.jassembly.compile.tokens.Token;
 import java.util.List;
@@ -22,7 +22,7 @@ public class SimpleCompiler {
         Program ast = parser.parseProgram(tokens.iterator());
         Jassembly jassembly = new Jassembly();
         generator.generateCode(ast, jassembly);
-        List<JassemblyCommand> commands = jassembly.getCommands();
+        List<Labelled> commands = jassembly.getCommands();
         return new JassemblyCompiler()
                 .removeDeadCode(true)
                 .toProgram(commands);

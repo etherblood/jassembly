@@ -64,10 +64,10 @@ public class TestPrograms {
     private static long compute(List<Integer> program, int width, int ram) {
         Computer computer = new Computer(width, program, ram);
         Engine engine = new Engine();
-        while (computer.command.getSignals().getAsLong() != Instruction.TERMINATE.ordinal()) {
+        while (computer.instruction.getSignals().getAsLong() != Instruction.TERMINATE.ordinal()) {
             advanceCycle(computer, engine);
         }
-        return computer.acc.getSignals().getAsLong();
+        return computer.ax.getSignals().getAsLong();
     }
 
     private static void advanceCycle(Computer computer, Engine engine) {

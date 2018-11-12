@@ -20,7 +20,7 @@ public class Main {
      * @param args the command line arguments
      */
     public static void main(String[] args) throws Exception {
-        String sourceFile = "loop.txt";
+        String sourceFile = "fibonacci.txt";
         String sampleCode = readFile(sourceFile);
         List<Integer> program = new SimpleCompiler().compile(sampleCode);
 
@@ -31,7 +31,7 @@ public class Main {
         System.out.println();
         printState(computer);
         Engine engine = new Engine();
-        while (computer.command.getSignals().getAsLong() != Instruction.TERMINATE.ordinal()) {
+        while (computer.instruction.getSignals().getAsLong() != Instruction.TERMINATE.ordinal()) {
             advanceCycle(computer, engine);
             printState(computer);
         }
@@ -69,13 +69,13 @@ public class Main {
     }
 
     private static void printState(Computer computer) {
-        SignalRange currentCommand = computer.command.getSignals();
+        SignalRange currentCommand = computer.instruction.getSignals();
         System.out.println("ram: " + computer.ram.getSignals().toHexStrig());
         System.out.println("pc: " + computer.pc.getSignals().toHexStrig() + " (" + computer.pc.getSignals().getAsLong() + ")");
-        System.out.println("cmd: " + currentCommand.toHexStrig() + " (" + Instruction.values()[(int) currentCommand.getAsLong()] + ")");
-        System.out.println("ac: " + computer.acc.getSignals().toHexStrig() + " (" + computer.acc.getSignals().getAsLong() + ")");
-        System.out.println("x0: " + computer.x0.getSignals().toHexStrig() + " (" + computer.x0.getSignals().getAsLong() + ")");
-        System.out.println("x1: " + computer.x1.getSignals().toHexStrig() + " (" + computer.x1.getSignals().getAsLong() + ")");
+        System.out.println("ix: " + currentCommand.toHexStrig() + " (" + Instruction.values()[(int) currentCommand.getAsLong()] + ")");
+        System.out.println("ax: " + computer.ax.getSignals().toHexStrig() + " (" + computer.ax.getSignals().getAsLong() + ")");
+        System.out.println("bx: " + computer.bx.getSignals().toHexStrig() + " (" + computer.bx.getSignals().getAsLong() + ")");
+        System.out.println("cx: " + computer.cx.getSignals().toHexStrig() + " (" + computer.cx.getSignals().getAsLong() + ")");
         System.out.println("sb: " + computer.sb.getSignals().toHexStrig() + " (" + computer.sb.getSignals().getAsLong() + ")");
         System.out.println("sp: " + computer.sp.getSignals().toHexStrig() + " (" + computer.sp.getSignals().getAsLong() + ")");
         System.out.println();

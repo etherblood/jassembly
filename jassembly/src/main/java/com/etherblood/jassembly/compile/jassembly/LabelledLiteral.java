@@ -1,10 +1,12 @@
 package com.etherblood.jassembly.compile.jassembly;
 
-public class LiteralCommand extends JassemblyCommand {
+import com.etherblood.jassembly.compile.jassembly.JassemblyContext;
+
+public class LabelledLiteral extends Labelled {
 
     private final int value;
 
-    public LiteralCommand(int value) {
+    public LabelledLiteral(int value) {
         this.value = value;
     }
 

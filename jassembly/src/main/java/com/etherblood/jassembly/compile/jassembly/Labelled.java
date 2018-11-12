@@ -1,5 +1,6 @@
 package com.etherblood.jassembly.compile.jassembly;
 
+import com.etherblood.jassembly.compile.jassembly.JassemblyContext;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -7,7 +8,7 @@ import java.util.List;
  *
  * @author Philipp
  */
-public abstract class JassemblyCommand {
+public abstract class Labelled {
 
     private final List<String> labels = new ArrayList<>();
 

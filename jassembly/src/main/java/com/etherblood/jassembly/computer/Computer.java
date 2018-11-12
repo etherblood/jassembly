@@ -25,12 +25,12 @@ public class Computer {
     public final SimpleModule rshift;
     public final SimpleModule lu;
 
-    public final MemoryModule command;
+    public final MemoryModule instruction;
     public final SimpleModule commandMux;
 
     public final SimpleModule noop;
-    public final MemoryModule acc;
-    public final MemoryModule x0, x1, sb, sp;
+    public final MemoryModule ax;
+    public final MemoryModule bx, cx, sb, sp;
     public final MemoryModule pc;
     public final SimpleModule pcInc;
     public final SimpleModule pcMux;
@@ -70,15 +70,15 @@ public class Computer {
         lu = factory.logicUnit(width);
 
         noop = factory.noop(width + 1, width);
-        acc = factory.msFlipFlop(width);
-        x0 = factory.msFlipFlop(width);
-        x1 = factory.msFlipFlop(width);
+        ax = factory.msFlipFlop(width);
+        bx = factory.msFlipFlop(width);
+        cx = factory.msFlipFlop(width);
         sb = factory.msFlipFlop(width);
         sp = factory.msFlipFlop(width);
         pc = factory.msFlipFlop(width);
         pcInc = factory.incrementer(width);
         pcMux = factory.multiplexer(width);
-        command = factory.msFlipFlop(width);
+        instruction = factory.msFlipFlop(width);
         commandMux = factory.multiplexer(width);
         commandDecodeMux = factory.mux(ControlSignals.SIGNAL_BITS, Instruction.values().length);
 
@@ -100,7 +100,7 @@ public class Computer {
         for (int lineCode : program) {
             ram.getSignals().subRange(nextLine++ * width, width).set(lineCode);
         }
-        command.getSignals().set(Instruction.LOAD_CMD.ordinal());
+        instruction.getSignals().set(Instruction.READ_IX_PC.ordinal());
         sp.getSignals().set(ramWords);
         sb.getSignals().set(ramWords);
 
@@ -120,19 +120,19 @@ public class Computer {
             inBus(noop, 0, width + 1),
             inBus(pcMux, width, width + 1),
             inBus(commandMux, width, width + 1),
-            inBus(acc, 0, width + 1),
-            inBus(x0, 0, width + 1),
-            inBus(x1, 0, width + 1),
+            inBus(ax, 0, width + 1),
+            inBus(bx, 0, width + 1),
+            inBus(cx, 0, width + 1),
             inBus(sb, 0, width + 1),
             inBus(sp, 0, width + 1)
         };
         List<Wire>[] registerOutputs = new List[]{
             outBus(noop, 0, width),
             outBus(pc, 0, width),
-            outBus(command, 0, width),
-            outBus(acc, 0, width),
-            outBus(x0, 0, width),
-            outBus(x1, 0, width),
+            outBus(instruction, 0, width),
+            outBus(ax, 0, width),
+            outBus(bx, 0, width),
+            outBus(cx, 0, width),
             outBus(sb, 0, width),
             outBus(sp, 0, width)
         };
@@ -177,8 +177,8 @@ public class Computer {
         lu.getIn(2 * width).setWire(opArgDemux.getOut(ControlSignals.LU_ADR * ControlSignals.OP_ARG.length));
         lu.getIn(2 * width + 1).setWire(opArgDemux.getOut(ControlSignals.LU_ADR * ControlSignals.OP_ARG.length + 1));
 
-        connect(commandMux, 0, command, 0, width);
-        setInput(commandMux, 0, width, Instruction.LOAD_CMD.ordinal());
+        connect(commandMux, 0, instruction, 0, width);
+        setInput(commandMux, 0, width, Instruction.READ_IX_PC.ordinal());
         connect(pcInc, 0, pc, 0, width);
         connect(pc, 0, pcMux, 0, width);
         connect(pcMux, 0, pcInc, 0, width);
@@ -211,7 +211,7 @@ public class Computer {
             connect(operator, inBus(busMuxWrite, i * width, operator.size()));
         }
 
-        connect(command, 0, commandDecodeMux, commands.length * ControlSignals.SIGNAL_BITS, Util.ceilLog(commands.length));
+        connect(instruction, 0, commandDecodeMux, commands.length * ControlSignals.SIGNAL_BITS, Util.ceilLog(commands.length));
         for (int i = 0; i < controlSignals.size(); i++) {
             controlSignals.get(i).setWire(commandDecodeMux.getOut(i));
         }
@@ -221,11 +221,11 @@ public class Computer {
         }
 
         pc.getIn(width).setWire(clockWire);
-        command.getIn(width).setWire(clockWire);
+        instruction.getIn(width).setWire(clockWire);
     }
 
     private List<SimpleModule> modules() {
-        return Arrays.asList(ram, adder, acc, pc, pcInc, pcMux, command, commandDecodeMux, commandMux, noop, x0, x1, sb, sp, busDemuxRead0, busDemuxRead1, busDemuxWrite, busMuxRead0, busMuxRead1, busMuxWrite, modRead0, modWrite, rshift, lu, opArgDemux, ramAnd);
+        return Arrays.asList(ram, adder, ax, pc, pcInc, pcMux, instruction, commandDecodeMux, commandMux, noop, bx, cx, sb, sp, busDemuxRead0, busDemuxRead1, busDemuxWrite, busMuxRead0, busMuxRead1, busMuxWrite, modRead0, modWrite, rshift, lu, opArgDemux, ramAnd);
     }
 
     private void quiet(Engine engine) {

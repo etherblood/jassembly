@@ -11,7 +11,7 @@ import java.util.UUID;
  */
 public class Jassembly {
 
-    private final List<JassemblyCommand> commands = new ArrayList<>();
+    private final List<Labelled> commands = new ArrayList<>();
     private final List<String> pendingLabels = new ArrayList<>();
 
     public void labelNext(String label) {
@@ -37,79 +37,79 @@ public class Jassembly {
     }
 
     public void jump() {
-        add(simple(Instruction.JUMP));
+        add(simple(Instruction.MOV_AX_PC));
     }
 
     public void toX0() {
-        add(simple(Instruction.TO_X0));
+        add(simple(Instruction.MOV_AX_BX));
     }
 
     public void toX1() {
-        add(simple(Instruction.TO_X1));
+        add(simple(Instruction.MOV_AX_CX));
     }
 
     public void toSB() {
-        add(simple(Instruction.TO_SB));
+        add(simple(Instruction.MOV_AX_SB));
     }
 
     public void toSP() {
-        add(simple(Instruction.TO_SP));
+        add(simple(Instruction.MOV_AX_SP));
     }
 
     public void fromX0() {
-        add(simple(Instruction.FROM_X0));
+        add(simple(Instruction.MOV_BX_AX));
     }
 
     public void fromX1() {
-        add(simple(Instruction.FROM_X1));
+        add(simple(Instruction.MOV_CX_AX));
     }
 
     public void fromSB() {
-        add(simple(Instruction.FROM_SB));
+        add(simple(Instruction.MOV_SB_AX));
     }
 
     public void fromSP() {
-        add(simple(Instruction.FROM_SP));
+        add(simple(Instruction.MOV_SP_AX));
     }
 
     public void add() {
-        add(simple(Instruction.ADD));
+        add(simple(Instruction.ADD_AX_BX));
     }
 
     public void sub() {
-        add(simple(Instruction.SUB));
+        add(simple(Instruction.SUB_AX_BX));
     }
 
     public void and() {
-        add(simple(Instruction.AND));
+        add(simple(Instruction.AND_AX_BX));
     }
 
     public void or() {
-        add(simple(Instruction.OR));
+        add(simple(Instruction.OR_AX_BX));
     }
 
     public void xor() {
-        add(simple(Instruction.XOR));
+        add(simple(Instruction.XOR_AX_BX));
     }
 
     public void lshift() {
-        add(simple(Instruction.LSHIFT));
+        add(simple(Instruction.LSHIFT_AX_BX));
     }
 
     public void rshift() {
-        add(simple(Instruction.RSHIFT));
+        add(simple(Instruction.RSHIFT_AX_BX));
     }
 
     public void any() {
-        add(simple(Instruction.ANY));
+        add(simple(Instruction.ANY_AX));
     }
 
     public void inc() {
-        add(simple(Instruction.INC));
+        add(simple(Instruction.INC_AX));
     }
 
     public void dec() {
-        add(simple(Instruction.DEC));
+        add(simple(Instruction.DEC_AX));
     }
 
     public void signBit() {
@@ -117,44 +117,44 @@ public class Jassembly {
     }
 
     public void negate() {
-        add(simple(Instruction.INVERT));
-        add(simple(Instruction.INC));
+        add(simple(Instruction.INVERT_AX));
+        add(simple(Instruction.INC_AX));
     }
 
     public void complement() {
-        add(simple(Instruction.INVERT));
+        add(simple(Instruction.INVERT_AX));
     }
 
     public void constant(String label) {
-        add(simple(Instruction.LOAD_CONST));
+        add(simple(Instruction.READ_AX_PC));
         add(labelLiteral(label));
     }
 
     public void constant(int value) {
-        add(simple(Instruction.LOAD_CONST));
+        add(simple(Instruction.READ_AX_PC));
         add(literal(value));
     }
 
     public void stackDel() {
-        add(simple(Instruction.INC_STACK));
+        add(simple(Instruction.INC_SP));
     }
 
     public void stackPop() {
-        add(simple(Instruction.READ_STACK));
-        add(simple(Instruction.INC_STACK));
+        add(simple(Instruction.READ_AX_SP));
+        add(simple(Instruction.INC_SP));
     }
 
     public void stackPush() {
-        add(simple(Instruction.DEC_STACK));
-        add(simple(Instruction.WRITE_STACK));
+        add(simple(Instruction.DEC_SP));
+        add(simple(Instruction.WRITE_AX_SP));
     }
 
     public void ramRead() {
-        add(simple(Instruction.READ));
+        add(simple(Instruction.READ_AX_BX));
     }
 
     public void ramWrite() {
-        add(simple(Instruction.WRITE));
+        add(simple(Instruction.WRITE_AX_BX));
     }
 
     public void terminate() {
@@ -165,25 +165,25 @@ public class Jassembly {
         add(simple(command));
     }
 
-    public List<JassemblyCommand> getCommands() {
+    public List<Labelled> getCommands() {
         return commands;
     }
 
-    private void add(JassemblyCommand command) {
+    private void add(Labelled command) {
         command.getLabels().addAll(pendingLabels);
         pendingLabels.clear();
         commands.add(command);
     }
 
-    private static JassemblyCommand simple(Instruction command) {
-        return new SimpleCommand(command);
+    private static Labelled simple(Instruction command) {
+        return new LabelledInstruction(command);
     }
 
-    private static JassemblyCommand literal(int value) {
-        return new LiteralCommand(value);
+    private static Labelled literal(int value) {
+        return new LabelledLiteral(value);
     }
 
-    private static JassemblyCommand labelLiteral(String value) {
-        return new LabelLiteralCommand(value);
+    private static Labelled labelLiteral(String value) {
+        return new LabelledLabel(value);
     }
 }

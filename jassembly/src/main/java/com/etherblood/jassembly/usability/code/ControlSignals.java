@@ -23,10 +23,10 @@ public class ControlSignals {
 
     public static final int NULL_ADR = 0;
     public static final int PC_ADR = 1;
-    public static final int CMD_ADR = 2;
-    public static final int ACC_ADR = 3;
-    public static final int X0_ADR = 4;
-    public static final int X1_ADR = 5;
+    public static final int IX_ADR = 2;
+    public static final int AX_ADR = 3;
+    public static final int BX_ADR = 4;
+    public static final int CX_ADR = 5;
     public static final int SB_ADR = 6;
     public static final int SP_ADR = 7;
 

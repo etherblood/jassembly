@@ -1,12 +1,13 @@
 package com.etherblood.jassembly.compile.jassembly;
 
+import com.etherblood.jassembly.compile.jassembly.JassemblyContext;
 import com.etherblood.jassembly.usability.code.Instruction;
 
-public class SimpleCommand extends JassemblyCommand {
+public class LabelledInstruction extends Labelled {
 
     private final Instruction command;
 
-    public SimpleCommand(Instruction command) {
+    public LabelledInstruction(Instruction command) {
         this.command = command;
     }
 
