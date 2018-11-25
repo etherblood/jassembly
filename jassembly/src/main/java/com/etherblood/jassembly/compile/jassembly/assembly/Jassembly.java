@@ -49,6 +49,10 @@ public class Jassembly {
         pop(Register.PC);
     }
     
+    public void conditionalJump(JassemblyExpression condition, String jumpLabel) {
+        conditionalJump(condition, label(jumpLabel));
+    }
+    
     public void conditionalJump(JassemblyExpression condition, JassemblyExpression jumpAddress) {
         add(new ConditionalJump(condition, jumpAddress));
     }

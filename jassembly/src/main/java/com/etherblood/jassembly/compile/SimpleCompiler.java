@@ -6,6 +6,9 @@ import com.etherblood.jassembly.compile.jassembly.assembly.instructions.Jassembl
 import com.etherblood.jassembly.compile.jassembly.machine.Jmachine;
 import com.etherblood.jassembly.compile.jassembly.machine.Labelled;
 import com.etherblood.jassembly.compile.jassembly.machine.JmachineCompiler;
+import com.etherblood.jassembly.compile.jassembly.machine.processor.ConstantInliner;
+import com.etherblood.jassembly.compile.jassembly.machine.processor.DeadCodeRemover;
+import com.etherblood.jassembly.compile.jassembly.machine.processor.NoopRemover;
 import com.etherblood.jassembly.compile.tokens.Token;
 import com.etherblood.jassembly.usability.code.InstructionMapping;
 import com.etherblood.jassembly.usability.code.MachineInstructionSet;
@@ -38,6 +41,20 @@ public class SimpleCompiler {
             Labelled command = commands.get(i);
             System.out.println(i + ": " + command);
         }
+        System.out.println();
+        commands = new DeadCodeRemover(mapping).removeDeadCode(commands);
+        commands = new ConstantInliner(mapping).inlineConstants(commands);
+        commands = new NoopRemover(mapping).removeNoops(commands);
+        System.out.println();
+        for (int i = 0; i < commands.size(); i++) {
+            Labelled command = commands.get(i);
+            System.out.println(i + ": " + command);
+        }
+        System.out.println();
+        System.out.println();
+        System.out.println();
+        System.out.println();
+        System.out.println();
         return new JmachineCompiler(instructionSet).toProgram(commands);
     }
 }

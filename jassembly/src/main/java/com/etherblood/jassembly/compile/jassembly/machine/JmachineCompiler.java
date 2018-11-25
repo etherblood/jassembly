@@ -38,10 +38,6 @@ public class JmachineCompiler {
             LabelledLabel label = (LabelledLabel) labelled;
             return context.resolveLabel(label.getLabel());
         }
-        if (labelled instanceof LabelledInstructionCode) {
-            LabelledInstructionCode code = (LabelledInstructionCode) labelled;
-            return instructionSet.codeByInstruction(code.getInstruction());
-        }
         throw new UnsupportedOperationException(labelled.toString());
     }
 

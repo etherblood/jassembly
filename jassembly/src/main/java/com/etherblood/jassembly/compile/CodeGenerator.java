@@ -22,7 +22,6 @@ import com.etherblood.jassembly.compile.ast.statement.Statement;
 import com.etherblood.jassembly.compile.ast.statement.WhileStatement;
 import com.etherblood.jassembly.compile.jassembly.assembly.Jassembly;
 import com.etherblood.jassembly.compile.jassembly.Register;
-import com.etherblood.jassembly.compile.jassembly.UnaryOperator;
 import com.etherblood.jassembly.compile.jassembly.assembly.expressions.JassemblyExpression;
 import com.etherblood.jassembly.compile.jassembly.assembly.expressions.RegisterExpression;
 import com.etherblood.jassembly.compile.jassembly.assembly.instructions.ExitCode;
@@ -138,34 +137,16 @@ public class CodeGenerator {
         }
         if (statement instanceof IfElseStatement) {
             IfElseStatement ifElse = (IfElseStatement) statement;
-            expression(ifElse.getCondition(), context);
-
             UUID ifId = UUID.randomUUID();
             String ifBlock = "ifBody-" + ifId;
-            String elseBlock = "elseBody-" + ifId;
             String end = "endif-" + ifId;
-
-            code.mov(Register.AX, Register.CX);
-            code.mov(ifBlock, Register.AX);
-            code.mov(Register.AX, Register.BX);
-            code.mov(elseBlock, Register.AX);
-            code.xor(ax(), bx());
-            code.mov(Register.AX, Register.BX);
-
-            code.mov(Register.CX, Register.AX);
-            code.and(ax(), bx());
-            code.mov(Register.AX, Register.BX);
-            code.mov(elseBlock, Register.AX);
-            code.xor(ax(), bx());
-            code.jump(ax());
-
-            code.setLabel(elseBlock);
+            
+            expression(ifElse.getCondition(), context);
+            code.conditionalJump(ax(), ifBlock);
             if (ifElse.getElseStatement() != null) {
                 statement(ifElse.getElseStatement(), context);
             }
-            code.mov(end, Register.AX);
-            code.jump(ax());
-
+            code.jump(end);
             code.setLabel(ifBlock);
             statement(ifElse.getIfStatement(), context);
             code.setLabel(end);
@@ -174,31 +155,18 @@ public class CodeGenerator {
         if (statement instanceof WhileStatement) {
             WhileStatement whileStatement = (WhileStatement) statement;
             UUID whileId = UUID.randomUUID();
-            String start = "whileHead-" + whileId;
+            String head = "whileHead-" + whileId;
             String body = "whileBody-" + whileId;
             String end = "endwhile-" + whileId;
 
-            code.setLabel(start);
-            expression(whileStatement.getCondition(), context);
-
-            code.mov(Register.AX, Register.CX);
-            code.mov(body, Register.AX);
-            code.mov(Register.AX, Register.BX);
-            code.mov(end, Register.AX);
-            code.xor(ax(), bx());
-            code.mov(Register.AX, Register.BX);
-
-            code.mov(Register.CX, Register.AX);
-            code.and(ax(), bx());
-            code.mov(Register.AX, Register.BX);
-            code.mov(end, Register.AX);
-            code.xor(ax(), bx());
-            code.jump(ax());
+            code.jump(head);
 
             code.setLabel(body);
-            statement(whileStatement.getBody(), context.withLoopLabels(start, end));
-            code.mov(start, Register.AX);
-            code.jump(ax());
+            statement(whileStatement.getBody(), context.withLoopLabels(head, end));
+            
+            code.setLabel(head);
+            expression(whileStatement.getCondition(), context);
+            code.conditionalJump(ax(), body);
 
             code.setLabel(end);
             return;
@@ -271,24 +239,10 @@ public class CodeGenerator {
             if (binary.getOperator() == BinaryOperator.LAZY_OR) {
                 UUID lazyOrId = UUID.randomUUID();
                 String skip = "lazyOrSkip-" + lazyOrId;
-                String eval = "lazyOrEval-" + lazyOrId;
 
                 expression(binary.getA(), context);
                 code.mov(Register.AX, Register.CX);
-                code.mov(skip, Register.AX);
-                code.mov(Register.AX, Register.BX);
-                code.mov(eval, Register.AX);
-                code.xor(ax(), bx());
-                code.mov(Register.AX, Register.BX);
-
-                code.mov(Register.CX, Register.AX);
-                code.and(ax(), bx());
-                code.mov(Register.AX, Register.BX);
-                code.mov(eval, Register.AX);
-                code.xor(ax(), bx());
-                code.jump(ax());
-
-                code.setLabel(eval);
+                code.conditionalJump(cx(), skip);
                 expression(binary.getB(), context);
                 code.mov(Register.AX, Register.CX);
 
@@ -299,24 +253,11 @@ public class CodeGenerator {
             if (binary.getOperator() == BinaryOperator.LAZY_AND) {
                 UUID lazyAndId = UUID.randomUUID();
                 String skip = "lazyAndSkip-" + lazyAndId;
-                String eval = "lazyAndEval-" + lazyAndId;
 
                 expression(binary.getA(), context);
                 code.mov(Register.AX, Register.CX);
-                code.mov(skip, Register.AX);
-                code.mov(Register.AX, Register.BX);
-                code.mov(eval, Register.AX);
-                code.xor(ax(), bx());
-                code.mov(Register.AX, Register.BX);
-
-                code.mov(Register.CX, Register.AX);
-                code.and(ax(), bx());
-                code.mov(Register.AX, Register.BX);
-                code.mov(skip, Register.AX);
-                code.xor(ax(), bx());
-                code.jump(ax());
-
-                code.setLabel(eval);
+                code.complement();
+                code.conditionalJump(ax(), skip);
                 expression(binary.getB(), context);
                 code.mov(Register.AX, Register.CX);
 
@@ -381,6 +322,16 @@ public class CodeGenerator {
                     code.complement();
                     break;
                 case MULT:
+//int mult(int a, int b) {
+//    int c = 0;
+//    while (bool(a)) {
+//        c = c + (a & bool(b & 1));
+//        b = b >> 1;
+//        a = a << 1;
+//    }
+//    return c;
+//}
+                    
                     UUID multId = UUID.randomUUID();
                     String multStart = "multStart-" + multId;
                     String multBody = "multBody-" + multId;

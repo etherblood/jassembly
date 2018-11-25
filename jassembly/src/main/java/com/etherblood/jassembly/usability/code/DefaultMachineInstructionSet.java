@@ -16,6 +16,12 @@ public class DefaultMachineInstructionSet extends SimpleMachineInstructionSet {
         instructions.add(mapping.noop());
         instructions.add(mapping.readInstruction());
         instructions.add(mapping.terminate());
+        
+        for (Register a : Register.values()) {
+            instructions.add(mapping.constantZero(a));
+            instructions.add(mapping.constantOne(a));
+            instructions.add(mapping.constantNegativeOne(a));
+        }
 
         for (Register a : Register.values()) {
             instructions.add(mapping.readConstant(a));

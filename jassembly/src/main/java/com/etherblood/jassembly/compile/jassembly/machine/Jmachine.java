@@ -48,7 +48,7 @@ public class Jmachine {
         if(!instructionSet.supports(instruction)) {
             throw new IllegalArgumentException(instruction.toString());
         }
-        add(new LabelledInstructionCode(instruction));
+        add(new LabelledLiteral(instructionSet.codeByInstruction(instruction)));
     }
 
     private void add(MachineInstruction command) {
