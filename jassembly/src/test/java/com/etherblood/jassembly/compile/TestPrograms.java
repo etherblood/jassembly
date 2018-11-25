@@ -3,9 +3,9 @@ package com.etherblood.jassembly.compile;
 import com.etherblood.jassembly.computer.Computer;
 import com.etherblood.jassembly.core.Engine;
 import com.etherblood.jassembly.usability.code.DefaultMachineInstructionSet;
-import com.etherblood.jassembly.usability.code.Instruction;
 import com.etherblood.jassembly.usability.code.MachineInstructionSet;
 import com.etherblood.jassembly.usability.code.MachineInstructions;
+import com.etherblood.jassembly.usability.monitoring.ProgramStats;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -26,52 +26,71 @@ public class TestPrograms {
 
     @Test
     public void _12x9() {
-        List<Integer> program = compiler.compile(loadFile("12x9.txt"), instructionSet);
+        String name = "12x9.txt";
+        System.out.println(name);
+        List<Integer> program = compiler.compile(loadFile(name), instructionSet);
         long result = compute(program, 16, 200);
         assertEquals(108, result);
     }
 
     @Test
     public void _3x5() {
-        List<Integer> program = compiler.compile(loadFile("3x5.txt"), instructionSet);
+        String name = "3x5.txt";
+        System.out.println(name);
+        List<Integer> program = compiler.compile(loadFile(name), instructionSet);
         long result = compute(program, 16, 200);
         assertEquals(15, result);
     }
 
     @Test
     public void _128x2000() {
-        List<Integer> program = compiler.compile(loadFile("128x2000.txt"), instructionSet);
+        String name = "128x2000.txt";
+        System.out.println(name);
+        List<Integer> program = compiler.compile(loadFile(name), instructionSet);
         long result = compute(program, 16, 200);
-        assertEquals(59392, result);
+        assertEquals((128 * 2000) & 0xffff, result);
     }
 
     @Test
     public void loop() {
-        List<Integer> program = compiler.compile(loadFile("loop.txt"), instructionSet);
+        String name = "loop.txt";
+        System.out.println(name);
+        List<Integer> program = compiler.compile(loadFile(name), instructionSet);
         long result = compute(program, 16, 200);
         assertEquals(0, result);
     }
 
     @Test
     public void fibonacci() {
-        List<Integer> program = compiler.compile(loadFile("fibonacci.txt"), instructionSet);
+        String name = "fibonacci.txt";
+        System.out.println(name);
+        List<Integer> program = compiler.compile(loadFile(name), instructionSet);
         long result = compute(program, 16, 200);
         assertEquals(55, result);
     }
 
     @Test
     public void relational() {
-        List<Integer> program = compiler.compile(loadFile("relational.txt"), instructionSet);
+        String name = "relational.txt";
+        System.out.println(name);
+        List<Integer> program = compiler.compile(loadFile(name), instructionSet);
         long result = compute(program, 16, 200);
         assertEquals(1, result);
     }
 
     private long compute(List<Integer> program, int width, int stack) {
+        ProgramStats stats = new ProgramStats();
         Computer computer = new Computer(width, program, program.size() + stack, instructionSet);
         Engine engine = new Engine();
         while (!isTerminal(Math.toIntExact(computer.instruction.getSignals().getAsLong()), instructionSet)) {
-            computer.advanceCycle(engine);
+            stats.getCycles().add(computer.advanceCycle(engine));
         }
+        System.out.println("Statistics:");
+        System.out.println("duration: " + stats.duration());
+        System.out.println("cycles: " + stats.getCycles().size());
+        System.out.println("ticks: " + stats.ticks());
+        System.out.println("gate updates: " + stats.updatedGates());
+        System.out.println();
         return computer.ax.getSignals().getAsLong();
     }
 

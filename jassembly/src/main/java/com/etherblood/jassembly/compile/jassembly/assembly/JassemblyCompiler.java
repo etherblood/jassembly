@@ -16,6 +16,7 @@ import com.etherblood.jassembly.compile.jassembly.assembly.instructions.Write;
 import com.etherblood.jassembly.compile.jassembly.machine.Jmachine;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 
 /**
  *
@@ -78,12 +79,12 @@ public class JassemblyCompiler {
             }
             consumer.instruction(consumer.map().write(address, Register.SP));
             resolve(conditionalJump.getCondition(), Register.CX, consumer);
-            
+
             consumer.instruction(consumer.map().readConstant(Register.AX));
             consumer.instructionCode(consumer.map().jump(Register.BX));
             consumer.instruction(consumer.map().readConstant(Register.BX));
             consumer.instructionCode(consumer.map().noop());
-            
+
             consumer.instruction(consumer.map().xor(Register.AX, Register.BX, Register.AX));
             consumer.instruction(consumer.map().and(Register.AX, Register.CX, Register.AX));
             consumer.instruction(consumer.map().xor(Register.AX, Register.BX, Register.AX));
@@ -143,7 +144,7 @@ public class JassemblyCompiler {
                 resolve(binary.getB(), b, consumer);
             }
             Register to = binary.getDest();
-            switch(binary.getOperator()){
+            switch (binary.getOperator()) {
                 case ADD:
                     consumer.instruction(consumer.map().add(a, b, to));
                     break;
@@ -151,7 +152,88 @@ public class JassemblyCompiler {
                     consumer.instruction(consumer.map().subtract(a, b, to));
                     break;
                 case MULT:
-                    throw new AssertionError(binary.getOperator().name());
+                    //int mult(int a, int b) {
+                    //    int c = 0;
+                    //    while (bool(a)) {
+                    //        c = c + (a & bool(b & 1));
+                    //        b = b >> 1;
+                    //        a = a << 1;
+                    //    }
+                    //    return c;
+                    //}
+                    UUID multId = UUID.randomUUID();
+                    String multStart = "multStart-" + multId;
+                    String multBody = "multBody-" + multId;
+                    String multEnd = "multEnd-" + multId;
+
+                    consumer.instruction(consumer.map().move(Register.AX, Register.CX));
+                    consumer.instruction(consumer.map().move(Register.SB, Register.AX));
+                    consumer.instruction(consumer.map().write(Register.AX, Register.SP));
+                    consumer.instruction(consumer.map().decrement(Register.SP, Register.SP));
+
+                    consumer.instruction(consumer.map().move(Register.NONE, Register.AX));
+                    consumer.instruction(consumer.map().write(Register.AX, Register.SP));
+                    consumer.instruction(consumer.map().decrement(Register.SP, Register.SP));
+
+                    consumer.instruction(consumer.map().move(Register.BX, Register.AX));
+                    consumer.instruction(consumer.map().move(Register.AX, Register.SB));
+
+                    consumer.labelNext(multStart);
+                    consumer.constant(multBody, Register.AX);
+                    consumer.instruction(consumer.map().move(Register.AX, Register.BX));
+                    consumer.constant(multEnd, Register.AX);
+                    consumer.instruction(consumer.map().xor(Register.AX, Register.BX, Register.AX));
+                    consumer.instruction(consumer.map().move(Register.AX, Register.BX));
+
+                    consumer.instruction(consumer.map().move(Register.SB, Register.AX));
+                    consumer.instruction(consumer.map().any(Register.AX, Register.AX));
+
+                    consumer.instruction(consumer.map().and(Register.AX, Register.BX, Register.AX));
+                    consumer.instruction(consumer.map().move(Register.AX, Register.BX));
+                    consumer.constant(multEnd, Register.AX);
+                    consumer.instruction(consumer.map().xor(Register.AX, Register.BX, Register.AX));
+                    consumer.instruction(consumer.map().jump(Register.AX));
+
+                    consumer.labelNext(multBody);
+                    consumer.constant(1, Register.AX);
+                    consumer.instruction(consumer.map().move(Register.AX, Register.BX));
+                    consumer.instruction(consumer.map().move(Register.SB, Register.AX));
+                    consumer.instruction(consumer.map().and(Register.AX, Register.BX, Register.AX));
+                    consumer.instruction(consumer.map().any(Register.AX, Register.AX));
+                    consumer.instruction(consumer.map().move(Register.AX, Register.BX));
+                    consumer.instruction(consumer.map().move(Register.CX, Register.AX));
+                    consumer.instruction(consumer.map().and(Register.AX, Register.BX, Register.AX));
+                    consumer.instruction(consumer.map().move(Register.AX, Register.BX));
+
+                    consumer.instruction(consumer.map().increment(Register.SP, Register.SP));
+                    consumer.instruction(consumer.map().read(Register.SP, Register.AX));
+                    consumer.instruction(consumer.map().add(Register.AX, Register.BX, Register.AX));
+                    consumer.instruction(consumer.map().write(Register.AX, Register.SP));
+                    consumer.instruction(consumer.map().decrement(Register.SP, Register.SP));
+
+                    consumer.constant(1, Register.AX);
+                    consumer.instruction(consumer.map().move(Register.AX, Register.BX));
+
+                    consumer.instruction(consumer.map().move(Register.CX, Register.AX));
+                    consumer.instruction(consumer.map().leftShift(Register.AX, Register.BX, Register.AX));
+                    consumer.instruction(consumer.map().move(Register.AX, Register.CX));
+
+                    consumer.instruction(consumer.map().move(Register.SB, Register.AX));
+                    consumer.instruction(consumer.map().rightShift(Register.AX, Register.BX, Register.AX));
+                    consumer.instruction(consumer.map().move(Register.AX, Register.SB));
+
+                    consumer.constant(multStart, Register.AX);
+                    consumer.instruction(consumer.map().jump(Register.AX));
+
+                    consumer.labelNext(multEnd);
+                    consumer.instruction(consumer.map().increment(Register.SP, Register.SP));
+                    consumer.instruction(consumer.map().read(Register.SP, Register.AX));
+                    consumer.instruction(consumer.map().move(Register.AX, Register.BX));
+                    consumer.instruction(consumer.map().increment(Register.SP, Register.SP));
+                    consumer.instruction(consumer.map().read(Register.SP, Register.AX));
+                    consumer.instruction(consumer.map().move(Register.AX, Register.SB));
+                    consumer.instruction(consumer.map().move(Register.BX, Register.AX));
+                    break;
                 case DIV:
                     throw new AssertionError(binary.getOperator().name());
                 case MOD:
@@ -179,7 +261,7 @@ public class JassemblyCompiler {
                     break;
                 default:
                     throw new AssertionError(binary.getOperator().name());
-                
+
             }
             return;
         }
@@ -188,7 +270,7 @@ public class JassemblyCompiler {
 
     private Register findFree(Register... occupied) {
         for (Register register : Arrays.asList(Register.AX, Register.BX, Register.CX)) {
-            if(!Arrays.asList(occupied).contains(register)) {
+            if (!Arrays.asList(occupied).contains(register)) {
                 return register;
             }
         }

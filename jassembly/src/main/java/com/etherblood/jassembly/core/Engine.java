@@ -1,6 +1,7 @@
 package com.etherblood.jassembly.core;
 
 import com.etherblood.jassembly.core.collections.FastArrayList;
+import com.etherblood.jassembly.usability.monitoring.TickStats;
 
 /**
  *
@@ -11,6 +12,14 @@ public class Engine {
     private final FastArrayList<BinaryGate[]> gates = new FastArrayList<>();
     private final FastArrayList<Wire> trues = new FastArrayList<>(), falses = new FastArrayList<>();
 
+    public TickStats monitoredTick() {
+        int gateCount = gates.size();
+        long start = System.nanoTime();
+        tick();
+        long end = System.nanoTime();
+        return new TickStats(Math.toIntExact(end - start), gateCount);
+    }
+    
     public void tick() {
         for (BinaryGate[] arr : gates) {
             for (BinaryGate gate : arr) {

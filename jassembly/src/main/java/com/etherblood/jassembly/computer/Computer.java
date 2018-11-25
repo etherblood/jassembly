@@ -10,6 +10,7 @@ import com.etherblood.jassembly.usability.code.MachineInstructionSet;
 import com.etherblood.jassembly.usability.modules.MemoryModule;
 import com.etherblood.jassembly.usability.modules.ModuleFactory;
 import com.etherblood.jassembly.usability.modules.SimpleModule;
+import com.etherblood.jassembly.usability.monitoring.CycleStats;
 import com.etherblood.jassembly.usability.signals.SignalRange;
 import com.etherblood.jassembly.usability.signals.WireReference;
 import java.util.ArrayList;
@@ -255,29 +256,31 @@ public class Computer {
         return mod;
     }
 
-    public void advanceCycle(Engine engine) {
+    public CycleStats advanceCycle(Engine engine) {
+        CycleStats stats = new CycleStats(currentInstruction());
         clockWire.setSignal(true);
         engine.activate(clockWire);
         while (engine.isActive()) {
-            engine.tick();
+            stats.getTicks().add(engine.monitoredTick());
         }
 
         writeWire.setSignal(true);
         engine.activate(writeWire);
         while (engine.isActive()) {
-            engine.tick();
+            stats.getTicks().add(engine.monitoredTick());
         }
         writeWire.setSignal(false);
         engine.activate(writeWire);
         while (engine.isActive()) {
-            engine.tick();
+            stats.getTicks().add(engine.monitoredTick());
         }
 
         clockWire.setSignal(false);
         engine.activate(clockWire);
         while (engine.isActive()) {
-            engine.tick();
+            stats.getTicks().add(engine.monitoredTick());
         }
+        return stats;
     }
 
     public void printState() {
@@ -291,5 +294,10 @@ public class Computer {
         System.out.println("sb: " + sb.getSignals().toHexStrig() + " (" + sb.getSignals().getAsLong() + ")");
         System.out.println("sp: " + sp.getSignals().toHexStrig() + " (" + sp.getSignals().getAsLong() + ")");
         System.out.println();
+    }
+    
+    private MachineInstruction currentInstruction() {
+        SignalRange currentCommand = instruction.getSignals();
+        return instructionSet.instructionByCode(Math.toIntExact(currentCommand.getAsLong()));
     }
 }

@@ -3,7 +3,6 @@ package com.etherblood.jassembly.compile.jassembly.assembly;
 import com.etherblood.jassembly.compile.jassembly.UnaryOperator;
 import com.etherblood.jassembly.compile.jassembly.BinaryOperator;
 import com.etherblood.jassembly.compile.jassembly.Register;
-import com.etherblood.jassembly.compile.jassembly.assembly.expressions.BinaryExpression;
 import com.etherblood.jassembly.compile.jassembly.assembly.instructions.UnaryOperation;
 import com.etherblood.jassembly.compile.jassembly.assembly.instructions.JassemblyInstruction;
 import com.etherblood.jassembly.compile.jassembly.assembly.expressions.ConstantExpression;
@@ -141,6 +140,10 @@ public class Jassembly {
 
     public void rshift(JassemblyExpression a, JassemblyExpression b) {
         binary(a, b, BinaryOperator.RSHIFT, Register.AX);
+    }
+
+    public void mult(JassemblyExpression a, JassemblyExpression b) {
+        binary(a, b, BinaryOperator.MULT, Register.AX);
     }
 
     public void binary(JassemblyExpression a, JassemblyExpression b, BinaryOperator operator, Register to) {
