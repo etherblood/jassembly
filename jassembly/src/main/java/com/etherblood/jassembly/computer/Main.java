@@ -1,9 +1,11 @@
 package com.etherblood.jassembly.computer;
 
 import com.etherblood.jassembly.compile.SimpleCompiler;
+import com.etherblood.jassembly.compile.jassembly.assembly.instructions.ExitCode;
 import com.etherblood.jassembly.core.Engine;
-import com.etherblood.jassembly.usability.signals.SignalRange;
-import com.etherblood.jassembly.usability.code.Instruction;
+import com.etherblood.jassembly.usability.code.DefaultMachineInstructionSet;
+import com.etherblood.jassembly.usability.code.MachineInstructionSet;
+import com.etherblood.jassembly.usability.code.MachineInstructions;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -22,63 +24,35 @@ public class Main {
     public static void main(String[] args) throws Exception {
         String sourceFile = "fibonacci.txt";
         String sampleCode = readFile(sourceFile);
-        List<Integer> program = new SimpleCompiler().compile(sampleCode);
+        MachineInstructions machineInstructions = new MachineInstructions();
+        MachineInstructionSet instructionSet = new DefaultMachineInstructionSet(machineInstructions);
+        System.out.println("instructions: " + instructionSet.instructionCount());
+        System.out.println();
+        List<Integer> program = new SimpleCompiler().compile(sampleCode, instructionSet);
 
-        int width = 8;
-        int ram = 256;
-        Computer computer = new Computer(width, program, ram);
+        int width = 16;
+        int ram = 512;
+        Computer computer = new Computer(width, program, ram, instructionSet);
         System.out.println("Computer built from " + computer.countGates() + " nands.");
         System.out.println();
-        printState(computer);
+        computer.printState();
         Engine engine = new Engine();
-        while (computer.instruction.getSignals().getAsLong() != Instruction.TERMINATE.ordinal()) {
-            advanceCycle(computer, engine);
-            printState(computer);
+        while (!isTerminal(Math.toIntExact(computer.instruction.getSignals().getAsLong()), instructionSet)) {
+            computer.advanceCycle(engine);
+            computer.printState();
         }
+        System.out.println();
+        System.out.println("terminated with exit code: " + ExitCode.values()[(int) computer.cx.getSignals().getAsLong()]);
+    }
+    
+    private static boolean isTerminal(int instructionCode, MachineInstructionSet instructionSet) {
+        return instructionCode == instructionSet.codeByInstruction(instructionSet.map().terminate());
     }
 
     private static String readFile(String sourceFile) throws IOException, URISyntaxException {
         ClassLoader classloader = Thread.currentThread().getContextClassLoader();
         String sampleCode = new String(Files.readAllBytes(new File(classloader.getResource(sourceFile).toURI()).toPath()));
         return sampleCode;
-    }
-
-    private static void advanceCycle(Computer computer, Engine engine) {
-        computer.clockWire.setSignal(true);
-        engine.activate(computer.clockWire);
-        while (engine.isActive()) {
-            engine.tick();
-        }
-
-        computer.writeWire.setSignal(true);
-        engine.activate(computer.writeWire);
-        while (engine.isActive()) {
-            engine.tick();
-        }
-        computer.writeWire.setSignal(false);
-        engine.activate(computer.writeWire);
-        while (engine.isActive()) {
-            engine.tick();
-        }
-
-        computer.clockWire.setSignal(false);
-        engine.activate(computer.clockWire);
-        while (engine.isActive()) {
-            engine.tick();
-        }
-    }
-
-    private static void printState(Computer computer) {
-        SignalRange currentCommand = computer.instruction.getSignals();
-        System.out.println("ram: " + computer.ram.getSignals().toHexStrig());
-        System.out.println("pc: " + computer.pc.getSignals().toHexStrig() + " (" + computer.pc.getSignals().getAsLong() + ")");
-        System.out.println("ix: " + currentCommand.toHexStrig() + " (" + Instruction.values()[(int) currentCommand.getAsLong()] + ")");
-        System.out.println("ax: " + computer.ax.getSignals().toHexStrig() + " (" + computer.ax.getSignals().getAsLong() + ")");
-        System.out.println("bx: " + computer.bx.getSignals().toHexStrig() + " (" + computer.bx.getSignals().getAsLong() + ")");
-        System.out.println("cx: " + computer.cx.getSignals().toHexStrig() + " (" + computer.cx.getSignals().getAsLong() + ")");
-        System.out.println("sb: " + computer.sb.getSignals().toHexStrig() + " (" + computer.sb.getSignals().getAsLong() + ")");
-        System.out.println("sp: " + computer.sp.getSignals().toHexStrig() + " (" + computer.sp.getSignals().getAsLong() + ")");
-        System.out.println();
     }
 
 }

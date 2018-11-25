@@ -13,7 +13,7 @@ public class VariablesContext {
     private int parameterOffset, variableOffset;
 
     public VariablesContext() {
-        this(new HashMap<>(), 2, -1);
+        this(new HashMap<>(), 3, 0);
     }
 
     private VariablesContext(Map<String, Integer> variableOffsets, int parameterOffset, int variableOffset) {

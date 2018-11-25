@@ -16,10 +16,10 @@ public class ControlSignals {
     public static final Range W_MOD;
     public static final int SIGNAL_BITS;
 
-    public static final int RAM_ADR = 0;
+    public static final int LU_ADR = 0;
     public static final int ADD_ADR = 1;
     public static final int RSHIFT_ADR = 2;
-    public static final int LU_ADR = 3;
+    public static final int RAM_ADR = 3;
 
     public static final int NULL_ADR = 0;
     public static final int PC_ADR = 1;
@@ -35,8 +35,8 @@ public class ControlSignals {
     public static final int MOD_INV = 2;
     public static final int MOD_REV = 3;
 
-    public static final int LU_AND = 0;
-    public static final int LU_OR = 1;
+    public static final int LU_OR = 0;
+    public static final int LU_AND = 1;
     public static final int LU_XOR = 2;
 
     static {

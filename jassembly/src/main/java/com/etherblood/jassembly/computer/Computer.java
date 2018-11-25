@@ -4,11 +4,13 @@ import com.etherblood.jassembly.core.Engine;
 import static com.etherblood.jassembly.usability.BusUtil.*;
 import com.etherblood.jassembly.core.Wire;
 import com.etherblood.jassembly.usability.Util;
-import com.etherblood.jassembly.usability.code.Instruction;
 import com.etherblood.jassembly.usability.code.ControlSignals;
+import com.etherblood.jassembly.usability.code.MachineInstruction;
+import com.etherblood.jassembly.usability.code.MachineInstructionSet;
 import com.etherblood.jassembly.usability.modules.MemoryModule;
 import com.etherblood.jassembly.usability.modules.ModuleFactory;
 import com.etherblood.jassembly.usability.modules.SimpleModule;
+import com.etherblood.jassembly.usability.signals.SignalRange;
 import com.etherblood.jassembly.usability.signals.WireReference;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -51,13 +53,19 @@ public class Computer {
 
     public final Wire clockWire = Wire.off();
     public final Wire writeWire = Wire.off();
+    
+    private final MachineInstructionSet instructionSet;
 
-    public Computer(int width, List<Integer> program, int ramWords) {
+    public Computer(int width, List<Integer> program, int ramWords, MachineInstructionSet instructionSet) {
+        this.instructionSet = instructionSet;
         if(Integer.bitCount(width) != 1) {
             throw new IllegalArgumentException("wordsize must be a power of 2.");
         }
         if(1 << width < ramWords) {
             throw new IllegalArgumentException("wordsize too small to address full RAM.");
+        }
+        if(1 << width < instructionSet.instructionCount()) {
+            throw new IllegalArgumentException("wordsize too small to address instructionSet.");
         }
         int depth = Util.floorLog(width);
         int registersAddressWidth = ControlSignals.R0_ADR.length;
@@ -80,7 +88,7 @@ public class Computer {
         pcMux = factory.multiplexer(width);
         instruction = factory.msFlipFlop(width);
         commandMux = factory.multiplexer(width);
-        commandDecodeMux = factory.mux(ControlSignals.SIGNAL_BITS, Instruction.values().length);
+        commandDecodeMux = factory.mux(ControlSignals.SIGNAL_BITS, instructionSet.instructionCount());
 
         busMuxRead0 = factory.multiplexer(width, registersAddressWidth);
         busDemuxRead0 = factory.demultiplexer(width, operatorsAddressWidth);
@@ -94,26 +102,25 @@ public class Computer {
         ramAnd = factory.and();
 
         for (int i = 0; i < ramWords; i++) {
-            ram.getSignals().subRange(i * width, width).set(Instruction.WAIT.ordinal());
+            ram.getSignals().subRange(i * width, width).set(instructionSet.codeByInstruction(instructionSet.map().noop()));
         }
         int nextLine = 0;
         for (int lineCode : program) {
             ram.getSignals().subRange(nextLine++ * width, width).set(lineCode);
         }
-        instruction.getSignals().set(Instruction.READ_IX_PC.ordinal());
-        sp.getSignals().set(ramWords);
-        sb.getSignals().set(ramWords);
+        instruction.getSignals().set(instructionSet.codeByInstruction(instructionSet.map().readInstruction()));
+        sp.getSignals().set(ramWords - 1);
+        sb.getSignals().set(ramWords - 1);
 
         //TODO: below is workaround for stability issues...
         Engine engine = new Engine();
         quiet(engine);
-        connectWires(width, depth);
+        connectWires(width, depth, instructionSet);
         engine.activate(clockWire);
         quiet(engine);
     }
 
-    private void connectWires(int width, int depth) {
-        Instruction[] commands = Instruction.values();
+    private void connectWires(int width, int depth, MachineInstructionSet instructionSet) {
         int registersAddressWidth = ControlSignals.R0_ADR.length;
         int operatorsAddressWidth = ControlSignals.OP_ADR.length;
         List<WireReference>[] registerInputs = new List[]{
@@ -137,22 +144,22 @@ public class Computer {
             outBus(sp, 0, width)
         };
         List<WireReference>[] operatorInputsA = new List[]{
-            inBus(ram, 0, width),
+            inBus(lu, 0, width),
             inBus(adder, 0, width),
             inBus(rshift, 0, width),
-            inBus(lu, 0, width)
+            inBus(ram, 0, width)
         };
         List<WireReference>[] operatorInputsB = new List[]{
-            inBus(ram, width, width),
+            inBus(lu, width, width),
             inBus(adder, width, width),
             inBus(rshift, width, depth),
-            inBus(lu, width, width)
+            inBus(ram, width, width)
         };
         List<Wire>[] operatorOutputs = new List[]{
-            outBus(ram, 0, width),
+            outBus(lu, 0, width),
             outBus(adder, 0, width),
             outBus(rshift, 0, width),
-            outBus(lu, 0, width)
+            outBus(ram, 0, width)
         };
 
         List<WireReference> controlSignals = new ArrayList<>();
@@ -178,7 +185,7 @@ public class Computer {
         lu.getIn(2 * width + 1).setWire(opArgDemux.getOut(ControlSignals.LU_ADR * ControlSignals.OP_ARG.length + 1));
 
         connect(commandMux, 0, instruction, 0, width);
-        setInput(commandMux, 0, width, Instruction.READ_IX_PC.ordinal());
+        setInput(commandMux, 0, width, instructionSet.codeByInstruction(instructionSet.map().readInstruction()));
         connect(pcInc, 0, pc, 0, width);
         connect(pc, 0, pcMux, 0, width);
         connect(pcMux, 0, pcInc, 0, width);
@@ -211,13 +218,13 @@ public class Computer {
             connect(operator, inBus(busMuxWrite, i * width, operator.size()));
         }
 
-        connect(instruction, 0, commandDecodeMux, commands.length * ControlSignals.SIGNAL_BITS, Util.ceilLog(commands.length));
+        connect(instruction, 0, commandDecodeMux, instructionSet.instructionCount() * ControlSignals.SIGNAL_BITS, Util.ceilLog(instructionSet.instructionCount()));
         for (int i = 0; i < controlSignals.size(); i++) {
             controlSignals.get(i).setWire(commandDecodeMux.getOut(i));
         }
-        for (int i = 0; i < commands.length; i++) {
-            Instruction cmd = commands[i];
-            setInput(commandDecodeMux, i * ControlSignals.SIGNAL_BITS, ControlSignals.SIGNAL_BITS, cmd.getControlSignals());
+        for (int i = 0; i < instructionSet.instructionCount(); i++) {
+            MachineInstruction instruction = instructionSet.instructionByCode(i);
+            setInput(commandDecodeMux, i * ControlSignals.SIGNAL_BITS, ControlSignals.SIGNAL_BITS, instruction.getControlFlags());
         }
 
         pc.getIn(width).setWire(clockWire);
@@ -246,5 +253,43 @@ public class Computer {
             engine.tick();
         }
         return mod;
+    }
+
+    public void advanceCycle(Engine engine) {
+        clockWire.setSignal(true);
+        engine.activate(clockWire);
+        while (engine.isActive()) {
+            engine.tick();
+        }
+
+        writeWire.setSignal(true);
+        engine.activate(writeWire);
+        while (engine.isActive()) {
+            engine.tick();
+        }
+        writeWire.setSignal(false);
+        engine.activate(writeWire);
+        while (engine.isActive()) {
+            engine.tick();
+        }
+
+        clockWire.setSignal(false);
+        engine.activate(clockWire);
+        while (engine.isActive()) {
+            engine.tick();
+        }
+    }
+
+    public void printState() {
+        SignalRange currentCommand = instruction.getSignals();
+        System.out.println("ram: " + ram.getSignals().toHexStrig());
+        System.out.println("pc: " + pc.getSignals().toHexStrig() + " (" + pc.getSignals().getAsLong() + ")");
+        System.out.println("ix: " + currentCommand.toHexStrig() + " (" + instructionSet.instructionByCode(Math.toIntExact(currentCommand.getAsLong())) + ")");
+        System.out.println("ax: " + ax.getSignals().toHexStrig() + " (" + ax.getSignals().getAsLong() + ")");
+        System.out.println("bx: " + bx.getSignals().toHexStrig() + " (" + bx.getSignals().getAsLong() + ")");
+        System.out.println("cx: " + cx.getSignals().toHexStrig() + " (" + cx.getSignals().getAsLong() + ")");
+        System.out.println("sb: " + sb.getSignals().toHexStrig() + " (" + sb.getSignals().getAsLong() + ")");
+        System.out.println("sp: " + sp.getSignals().toHexStrig() + " (" + sp.getSignals().getAsLong() + ")");
+        System.out.println();
     }
 }

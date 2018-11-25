@@ -33,11 +33,11 @@ public class ModuleFactoryTest {
 
         setInput(lu, 2 * width, 2, 0);
         compute(lu);
-        assertEquals(a & b, getOutput(lu, 0, width));
+        assertEquals(a | b, getOutput(lu, 0, width));
 
         setInput(lu, 2 * width, 2, 1);
         compute(lu);
-        assertEquals(a | b, getOutput(lu, 0, width));
+        assertEquals(a & b, getOutput(lu, 0, width));
 
         setInput(lu, 2 * width, 2, 2);
         compute(lu);

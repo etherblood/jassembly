@@ -1,10 +1,14 @@
 package com.etherblood.jassembly.compile;
 
 import com.etherblood.jassembly.compile.ast.Program;
-import com.etherblood.jassembly.compile.jassembly.Jassembly;
-import com.etherblood.jassembly.compile.jassembly.Labelled;
-import com.etherblood.jassembly.compile.jassembly.JassemblyCompiler;
+import com.etherblood.jassembly.compile.jassembly.assembly.JassemblyCompiler;
+import com.etherblood.jassembly.compile.jassembly.assembly.instructions.JassemblyInstruction;
+import com.etherblood.jassembly.compile.jassembly.machine.Jmachine;
+import com.etherblood.jassembly.compile.jassembly.machine.Labelled;
+import com.etherblood.jassembly.compile.jassembly.machine.JmachineCompiler;
 import com.etherblood.jassembly.compile.tokens.Token;
+import com.etherblood.jassembly.usability.code.InstructionMapping;
+import com.etherblood.jassembly.usability.code.MachineInstructionSet;
 import java.util.List;
 
 /**
@@ -17,14 +21,23 @@ public class SimpleCompiler {
     private final Parser parser = new Parser();
     private final CodeGenerator generator = new CodeGenerator();
 
-    public List<Integer> compile(String code) {
+    public List<Integer> compile(String code, MachineInstructionSet instructionSet) {
+        InstructionMapping mapping = instructionSet.map();
         List<Token> tokens = lexer.tokenify(code);
         Program ast = parser.parseProgram(tokens.iterator());
-        Jassembly jassembly = new Jassembly();
-        generator.generateCode(ast, jassembly);
-        List<Labelled> commands = jassembly.getCommands();
-        return new JassemblyCompiler()
-                .removeDeadCode(true)
-                .toProgram(commands);
+        generator.consume(ast);
+        List<JassemblyInstruction> assemblyInstructions = generator.getInstructions();
+        for (JassemblyInstruction assemblyInstruction : assemblyInstructions) {
+            System.out.println(assemblyInstruction);
+        }
+        System.out.println();
+        Jmachine jmachine = new Jmachine(mapping, instructionSet);
+        new JassemblyCompiler().compile(assemblyInstructions, jmachine);
+        List<Labelled> commands = jmachine.getInstructions();
+        for (int i = 0; i < commands.size(); i++) {
+            Labelled command = commands.get(i);
+            System.out.println(i + ": " + command);
+        }
+        return new JmachineCompiler(instructionSet).toProgram(commands);
     }
 }

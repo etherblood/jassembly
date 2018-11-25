@@ -4,7 +4,6 @@ package com.etherblood.jassembly.compile.jassembly;
  *
  * @author Philipp
  */
-public interface JassemblyContext {
-
-    int resolveLabel(String label);
+public enum Register {
+    NONE, AX, BX, CX, PC, IX, SP, SB
 }

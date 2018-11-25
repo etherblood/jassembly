@@ -1,7 +1,5 @@
-package com.etherblood.jassembly.compile.jassembly;
+package com.etherblood.jassembly.compile.jassembly.machine;
 
-import com.etherblood.jassembly.compile.jassembly.JassemblyContext;
-import java.util.List;
 import java.util.Objects;
 
 public class LabelledLabel extends Labelled {
@@ -14,11 +12,6 @@ public class LabelledLabel extends Labelled {
 
     public String getLabel() {
         return label;
-    }
-
-    @Override
-    public int toCode(JassemblyContext context) {
-        return context.resolveLabel(label);
     }
 
     @Override

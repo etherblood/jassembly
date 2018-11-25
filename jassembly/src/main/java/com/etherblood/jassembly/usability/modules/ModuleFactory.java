@@ -43,13 +43,13 @@ public class ModuleFactory {
             inB[i] = demuxB.getIn(i);
             out[i] = mux.getOut(i);
             
-            and.getIn(i).setWire(demuxA.getOut(i));
-            and.getIn(width + i).setWire(demuxB.getOut(i));
-            mux.getIn(i).setWire(and.getOut(i));
+            or.getIn(i).setWire(demuxA.getOut(i));
+            or.getIn(width + i).setWire(demuxB.getOut(i));
+            mux.getIn(i).setWire(or.getOut(i));
             
-            or.getIn(i).setWire(demuxA.getOut(width + i));
-            or.getIn(width + i).setWire(demuxB.getOut(width + i));
-            mux.getIn(width + i).setWire(or.getOut(i));
+            and.getIn(i).setWire(demuxA.getOut(width + i));
+            and.getIn(width + i).setWire(demuxB.getOut(width + i));
+            mux.getIn(width + i).setWire(and.getOut(i));
             
             xor.getIn(i).setWire(demuxA.getOut(2 * width + i));
             xor.getIn(width + i).setWire(demuxB.getOut(2 * width + i));

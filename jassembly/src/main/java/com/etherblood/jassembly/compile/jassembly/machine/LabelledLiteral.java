@@ -1,6 +1,4 @@
-package com.etherblood.jassembly.compile.jassembly;
-
-import com.etherblood.jassembly.compile.jassembly.JassemblyContext;
+package com.etherblood.jassembly.compile.jassembly.machine;
 
 public class LabelledLiteral extends Labelled {
 
@@ -11,11 +9,6 @@ public class LabelledLiteral extends Labelled {
     }
 
     public int getValue() {
-        return value;
-    }
-
-    @Override
-    public int toCode(JassemblyContext context) {
         return value;
     }
 

@@ -1,43 +1,34 @@
 package com.etherblood.jassembly.compile;
 
-import com.etherblood.jassembly.compile.jassembly.Jassembly;
-import java.util.Objects;
-
 /**
  *
  * @author Philipp
  */
 public class CodeGenerationContext {
 
-    private final Jassembly jassembly;
     private final VariablesContext vars;
     private final String loopStart, loopEnd;
 
-    public CodeGenerationContext(Jassembly jassembly) {
-        this(Objects.requireNonNull(jassembly), new VariablesContext(), null, null);
+    public CodeGenerationContext() {
+        this(new VariablesContext(), null, null);
     }
 
-    private CodeGenerationContext(Jassembly jassembly, VariablesContext vars, String loopStart, String loopEnd) {
-        this.jassembly = jassembly;
+    private CodeGenerationContext(VariablesContext vars, String loopStart, String loopEnd) {
         this.vars = vars;
         this.loopStart = loopStart;
         this.loopEnd = loopEnd;
     }
 
     public CodeGenerationContext withLoopLabels(String start, String end) {
-        return new CodeGenerationContext(jassembly, vars, start, end);
+        return new CodeGenerationContext(vars, start, end);
     }
 
     public CodeGenerationContext withNewScope() {
-        return new CodeGenerationContext(jassembly, vars.childContext(), loopStart, loopEnd);
+        return new CodeGenerationContext(vars.childContext(), loopStart, loopEnd);
     }
 
     public CodeGenerationContext clearVars() {
-        return new CodeGenerationContext(jassembly, new VariablesContext(), loopStart, loopEnd);
-    }
-
-    public Jassembly getJassembly() {
-        return jassembly;
+        return new CodeGenerationContext(new VariablesContext(), loopStart, loopEnd);
     }
 
     public VariablesContext getVars() {

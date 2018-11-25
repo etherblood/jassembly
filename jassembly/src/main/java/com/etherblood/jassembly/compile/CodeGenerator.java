@@ -20,7 +20,14 @@ import com.etherblood.jassembly.compile.ast.statement.ExpressionStatement;
 import com.etherblood.jassembly.compile.ast.statement.IfElseStatement;
 import com.etherblood.jassembly.compile.ast.statement.Statement;
 import com.etherblood.jassembly.compile.ast.statement.WhileStatement;
-import com.etherblood.jassembly.compile.jassembly.Jassembly;
+import com.etherblood.jassembly.compile.jassembly.assembly.Jassembly;
+import com.etherblood.jassembly.compile.jassembly.Register;
+import com.etherblood.jassembly.compile.jassembly.UnaryOperator;
+import com.etherblood.jassembly.compile.jassembly.assembly.expressions.JassemblyExpression;
+import com.etherblood.jassembly.compile.jassembly.assembly.expressions.RegisterExpression;
+import com.etherblood.jassembly.compile.jassembly.assembly.instructions.ExitCode;
+import com.etherblood.jassembly.compile.jassembly.assembly.instructions.JassemblyInstruction;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -29,10 +36,12 @@ import java.util.UUID;
  */
 public class CodeGenerator {
 
-    public void generateCode(Program program, Jassembly jassembly) {
-        CodeGenerationContext context = new CodeGenerationContext(jassembly);
+    private final Jassembly code = new Jassembly();
+
+    public void consume(Program program) {
+        CodeGenerationContext context = new CodeGenerationContext();
         functionCall(new FunctionCallExpression("main"), context);
-        jassembly.terminate();
+        code.terminate(ExitCode.SUCCESS);
         for (FunctionDeclaration function : program.getFunctions()) {
             functionDeclaration(function, context);
         }
@@ -41,12 +50,12 @@ public class CodeGenerator {
     private void functionCall(FunctionCallExpression call, CodeGenerationContext context) {
         for (Expression argument : call.getArguments()) {
             expression(argument, context);
-            context.getJassembly().stackPush();
+            code.push(Register.AX);
         }
-        context.getJassembly().call(call.getName());
-        context.getJassembly().fromX1();//move result (stored in x1) to acc
+        code.call(call.getName());
+        code.mov(Register.CX, Register.AX);
         for (Expression argument : call.getArguments()) {
-            context.getJassembly().stackDel();
+            code.pop(Register.NONE);
         }
     }
 
@@ -56,12 +65,13 @@ public class CodeGenerator {
         for (int i = parameters.length - 1; i >= 0; i--) {
             child.getVars().declareParameter(parameters[i]);
         }
-        child.getJassembly().labelNext(function.getIdentifier());
-        child.getJassembly().fromSB();
-        child.getJassembly().stackPush();
-        child.getJassembly().fromSP();
-        child.getJassembly().toSB();
+        code.setLabel(function.getIdentifier());
+        code.mov(Register.SB, Register.AX);
+        code.push(Register.AX);
+        code.mov(Register.SP, Register.AX);
+        code.mov(Register.AX, Register.SB);
         block(function.getBody(), child);
+        code.terminate(ExitCode.END_OF_FUNCTION);
     }
 
     private void block(Block block, CodeGenerationContext context) {
@@ -71,7 +81,7 @@ public class CodeGenerator {
         }
         int innerVars = child.getVars().varCount() - context.getVars().varCount();
         for (int i = 0; i < innerVars; i++) {
-            context.getJassembly().stackDel();
+            code.pop(Register.NONE);
         }
     }
 
@@ -86,9 +96,9 @@ public class CodeGenerator {
             if (declare.getExpression() != null) {
                 expression(declare.getExpression(), context);
             } else {
-                context.getJassembly().constant(0);
+                code.mov(0, Register.AX);
             }
-            context.getJassembly().stackPush();
+            code.push(Register.AX);
             return;
         }
         throw new UnsupportedOperationException(blockItem.toString());
@@ -99,16 +109,16 @@ public class CodeGenerator {
             AssignStatement assign = (AssignStatement) statement;
             int variableOffset = context.getVars().getOffset(assign.getVariable());
             expression(assign.getExpression(), context);
-            context.getJassembly().toX1();
+            code.mov(Register.AX, Register.CX);
 
-            context.getJassembly().constant(variableOffset);
-            context.getJassembly().toX0();
-            context.getJassembly().fromSB();
-            context.getJassembly().add();
-            context.getJassembly().toX0();
+            code.mov(variableOffset, Register.AX);
+            code.mov(Register.AX, Register.BX);
+            code.mov(Register.SB, Register.AX);
+            code.add(ax(), bx());
+            code.mov(Register.AX, Register.BX);
 
-            context.getJassembly().fromX1();
-            context.getJassembly().ramWrite();
+            code.mov(Register.CX, Register.AX);
+            code.write(ax(), bx());
             return;
         }
         if (statement instanceof ExpressionStatement) {
@@ -117,13 +127,13 @@ public class CodeGenerator {
         }
         if (statement instanceof ReturnStatement) {
             expression(((ReturnStatement) statement).getExpression(), context);
-            context.getJassembly().toX1();
-            context.getJassembly().fromSB();
-            context.getJassembly().toSP();
-            context.getJassembly().stackPop();
-            context.getJassembly().toSB();
-            context.getJassembly().ret();
-            //result is in x1
+            code.mov(Register.AX, Register.CX);
+            code.mov(Register.SB, Register.AX);
+            code.mov(Register.AX, Register.SP);
+            code.pop(Register.AX);
+            code.mov(Register.AX, Register.SB);
+            code.ret();
+            //result is in CX
             return;
         }
         if (statement instanceof IfElseStatement) {
@@ -135,30 +145,30 @@ public class CodeGenerator {
             String elseBlock = "elseBody-" + ifId;
             String end = "endif-" + ifId;
 
-            context.getJassembly().toX1();
-            context.getJassembly().constant(ifBlock);
-            context.getJassembly().toX0();
-            context.getJassembly().constant(elseBlock);
-            context.getJassembly().xor();
-            context.getJassembly().toX0();
+            code.mov(Register.AX, Register.CX);
+            code.mov(ifBlock, Register.AX);
+            code.mov(Register.AX, Register.BX);
+            code.mov(elseBlock, Register.AX);
+            code.xor(ax(), bx());
+            code.mov(Register.AX, Register.BX);
 
-            context.getJassembly().fromX1();
-            context.getJassembly().and();
-            context.getJassembly().toX0();
-            context.getJassembly().constant(elseBlock);
-            context.getJassembly().xor();
-            context.getJassembly().jump();
+            code.mov(Register.CX, Register.AX);
+            code.and(ax(), bx());
+            code.mov(Register.AX, Register.BX);
+            code.mov(elseBlock, Register.AX);
+            code.xor(ax(), bx());
+            code.jump(ax());
 
-            context.getJassembly().labelNext(elseBlock);
+            code.setLabel(elseBlock);
             if (ifElse.getElseStatement() != null) {
                 statement(ifElse.getElseStatement(), context);
             }
-            context.getJassembly().constant(end);
-            context.getJassembly().jump();
+            code.mov(end, Register.AX);
+            code.jump(ax());
 
-            context.getJassembly().labelNext(ifBlock);
+            code.setLabel(ifBlock);
             statement(ifElse.getIfStatement(), context);
-            context.getJassembly().labelNext(end);
+            code.setLabel(end);
             return;
         }
         if (statement instanceof WhileStatement) {
@@ -168,39 +178,39 @@ public class CodeGenerator {
             String body = "whileBody-" + whileId;
             String end = "endwhile-" + whileId;
 
-            context.getJassembly().labelNext(start);
+            code.setLabel(start);
             expression(whileStatement.getCondition(), context);
 
-            context.getJassembly().toX1();
-            context.getJassembly().constant(body);
-            context.getJassembly().toX0();
-            context.getJassembly().constant(end);
-            context.getJassembly().xor();
-            context.getJassembly().toX0();
+            code.mov(Register.AX, Register.CX);
+            code.mov(body, Register.AX);
+            code.mov(Register.AX, Register.BX);
+            code.mov(end, Register.AX);
+            code.xor(ax(), bx());
+            code.mov(Register.AX, Register.BX);
 
-            context.getJassembly().fromX1();
-            context.getJassembly().and();
-            context.getJassembly().toX0();
-            context.getJassembly().constant(end);
-            context.getJassembly().xor();
-            context.getJassembly().jump();
+            code.mov(Register.CX, Register.AX);
+            code.and(ax(), bx());
+            code.mov(Register.AX, Register.BX);
+            code.mov(end, Register.AX);
+            code.xor(ax(), bx());
+            code.jump(ax());
 
-            context.getJassembly().labelNext(body);
+            code.setLabel(body);
             statement(whileStatement.getBody(), context.withLoopLabels(start, end));
-            context.getJassembly().constant(start);
-            context.getJassembly().jump();
+            code.mov(start, Register.AX);
+            code.jump(ax());
 
-            context.getJassembly().labelNext(end);
+            code.setLabel(end);
             return;
         }
         if (statement instanceof BreakStatement) {
-            context.getJassembly().constant(context.getLoopEnd());
-            context.getJassembly().jump();
+            code.mov(context.getLoopEnd(), Register.AX);
+            code.jump(ax());
             return;
         }
         if (statement instanceof ContinueStatement) {
-            context.getJassembly().constant(context.getLoopStart());
-            context.getJassembly().jump();
+            code.mov(context.getLoopStart(), Register.AX);
+            code.jump(ax());
             return;
         }
         if (statement instanceof Block) {
@@ -221,17 +231,17 @@ public class CodeGenerator {
         if (expression instanceof VariableExpression) {
             VariableExpression variable = (VariableExpression) expression;
             int variableOffset = context.getVars().getOffset(variable.getName());
-            context.getJassembly().constant(variableOffset);
-            context.getJassembly().toX0();
-            context.getJassembly().fromSB();
-            context.getJassembly().add();
-            context.getJassembly().toX0();
+            code.mov(variableOffset, Register.AX);
+            code.mov(Register.AX, Register.BX);
+            code.mov(Register.SB, Register.AX);
+            code.add(ax(), bx());
+            code.mov(Register.AX, Register.BX);
 
-            context.getJassembly().ramRead();
+            code.read(bx(), Register.AX);
             return;
         }
         if (expression instanceof ConstantExpression) {
-            context.getJassembly().constant(((ConstantExpression) expression).getValue());
+            code.mov(((ConstantExpression) expression).getValue(), Register.AX);
             return;
         }
         if (expression instanceof UnaryOperationExpression) {
@@ -239,18 +249,17 @@ public class CodeGenerator {
             expression(unary.getExpression(), context);
             switch (unary.getOperator()) {
                 case COMPLEMENT:
-                    context.getJassembly().complement();
+                    code.complement();
                     break;
                 case NEGATE:
-                    context.getJassembly().negate();
+                    code.negate();
                     break;
                 case TO_BOOL:
-                    context.getJassembly().any();
+                    code.any();
                     break;
                 case TO_INT:
-                    context.getJassembly().toX0();
-                    context.getJassembly().constant(1);
-                    context.getJassembly().and();
+                    code.mov(1, Register.BX);
+                    code.and(ax(), bx());
                     break;
                 default:
                     throw new AssertionError(unary.getOperator());
@@ -265,179 +274,179 @@ public class CodeGenerator {
                 String eval = "lazyOrEval-" + lazyOrId;
 
                 expression(binary.getA(), context);
-                context.getJassembly().toX1();
-                context.getJassembly().constant(skip);
-                context.getJassembly().toX0();
-                context.getJassembly().constant(eval);
-                context.getJassembly().xor();
-                context.getJassembly().toX0();
+                code.mov(Register.AX, Register.CX);
+                code.mov(skip, Register.AX);
+                code.mov(Register.AX, Register.BX);
+                code.mov(eval, Register.AX);
+                code.xor(ax(), bx());
+                code.mov(Register.AX, Register.BX);
 
-                context.getJassembly().fromX1();
-                context.getJassembly().and();
-                context.getJassembly().toX0();
-                context.getJassembly().constant(eval);
-                context.getJassembly().xor();
-                context.getJassembly().jump();
+                code.mov(Register.CX, Register.AX);
+                code.and(ax(), bx());
+                code.mov(Register.AX, Register.BX);
+                code.mov(eval, Register.AX);
+                code.xor(ax(), bx());
+                code.jump(ax());
 
-                context.getJassembly().labelNext(eval);
+                code.setLabel(eval);
                 expression(binary.getB(), context);
-                context.getJassembly().toX1();
+                code.mov(Register.AX, Register.CX);
 
-                context.getJassembly().labelNext(skip);
-                context.getJassembly().fromX1();
+                code.setLabel(skip);
+                code.mov(Register.CX, Register.AX);
                 return;
             }
             if (binary.getOperator() == BinaryOperator.LAZY_AND) {
                 UUID lazyAndId = UUID.randomUUID();
-                String skip = "lazyOrSkip-" + lazyAndId;
-                String eval = "lazyOrEval-" + lazyAndId;
+                String skip = "lazyAndSkip-" + lazyAndId;
+                String eval = "lazyAndEval-" + lazyAndId;
 
                 expression(binary.getA(), context);
-                context.getJassembly().toX1();
-                context.getJassembly().constant(skip);
-                context.getJassembly().toX0();
-                context.getJassembly().constant(eval);
-                context.getJassembly().xor();
-                context.getJassembly().toX0();
+                code.mov(Register.AX, Register.CX);
+                code.mov(skip, Register.AX);
+                code.mov(Register.AX, Register.BX);
+                code.mov(eval, Register.AX);
+                code.xor(ax(), bx());
+                code.mov(Register.AX, Register.BX);
 
-                context.getJassembly().fromX1();
-                context.getJassembly().and();
-                context.getJassembly().toX0();
-                context.getJassembly().constant(skip);
-                context.getJassembly().xor();
-                context.getJassembly().jump();
+                code.mov(Register.CX, Register.AX);
+                code.and(ax(), bx());
+                code.mov(Register.AX, Register.BX);
+                code.mov(skip, Register.AX);
+                code.xor(ax(), bx());
+                code.jump(ax());
 
-                context.getJassembly().labelNext(eval);
+                code.setLabel(eval);
                 expression(binary.getB(), context);
-                context.getJassembly().toX1();
+                code.mov(Register.AX, Register.CX);
 
-                context.getJassembly().labelNext(skip);
-                context.getJassembly().fromX1();
+                code.setLabel(skip);
+                code.mov(Register.CX, Register.AX);
                 return;
             }
 
             expression(binary.getA(), context);
-            context.getJassembly().stackPush();
+            code.push(Register.AX);
             expression(binary.getB(), context);
-            context.getJassembly().toX0();
-            context.getJassembly().stackPop();
+            code.mov(Register.AX, Register.BX);
+            code.pop(Register.AX);
             switch (binary.getOperator()) {
                 case EQUAL:
-                    context.getJassembly().xor();
-                    context.getJassembly().any();
-                    context.getJassembly().complement();
+                    code.xor(ax(), bx());
+                    code.any();
+                    code.complement();
                     break;
                 case NOT_EQUAL:
-                    context.getJassembly().xor();
-                    context.getJassembly().any();
+                    code.xor(ax(), bx());
+                    code.any();
                     break;
                 case ADD:
-                    context.getJassembly().add();
+                    code.add(ax(), bx());
                     break;
                 case SUB:
-                    context.getJassembly().sub();
+                    code.sub(ax(), bx());
                     break;
                 case OR:
-                    context.getJassembly().or();
+                    code.or(ax(), bx());
                     break;
                 case AND:
-                    context.getJassembly().and();
+                    code.and(ax(), bx());
                     break;
                 case XOR:
-                    context.getJassembly().xor();
+                    code.xor(ax(), bx());
                     break;
                 case LSHIFT:
-                    context.getJassembly().lshift();
+                    code.lshift(ax(), bx());
                     break;
                 case RSHIFT:
-                    context.getJassembly().rshift();
+                    code.rshift(ax(), bx());
                     break;
                 case LESS_OR_EQUAL:
-                    context.getJassembly().dec();
+                    code.dec();
                 case LESS_THAN:
-                    context.getJassembly().sub();
-                    context.getJassembly().toX0();
-                    context.getJassembly().signBit();
-                    context.getJassembly().and();
-                    context.getJassembly().any();
+                    code.sub(ax(), bx());
+                    code.mov(Register.AX, Register.BX);
+                    code.signBit(Register.AX);
+                    code.and(ax(), bx());
+                    code.any();
                     break;
                 case GREATER_THAN:
-                    context.getJassembly().dec();
+                    code.dec();
                 case GREATER_OR_EQUAL:
-                    context.getJassembly().sub();
-                    context.getJassembly().toX0();
-                    context.getJassembly().signBit();
-                    context.getJassembly().and();
-                    context.getJassembly().any();
-                    context.getJassembly().complement();
+                    code.sub(ax(), bx());
+                    code.mov(Register.AX, Register.BX);
+                    code.signBit(Register.AX);
+                    code.and(ax(), bx());
+                    code.any();
+                    code.complement();
                     break;
                 case MULT:
                     UUID multId = UUID.randomUUID();
                     String multStart = "multStart-" + multId;
                     String multBody = "multBody-" + multId;
                     String multEnd = "multEnd-" + multId;
-                    
-                    context.getJassembly().toX1();
-                    context.getJassembly().fromSB();
-                    context.getJassembly().stackPush();
 
-                    context.getJassembly().constant(0);
-                    context.getJassembly().stackPush();
+                    code.mov(Register.AX, Register.CX);
+                    code.mov(Register.SB, Register.AX);
+                    code.push(Register.AX);
 
-                    context.getJassembly().fromX0();
-                    context.getJassembly().toSB();
+                    code.mov(0, Register.AX);
+                    code.push(Register.AX);
 
-                    context.getJassembly().labelNext(multStart);
-                    context.getJassembly().constant(multBody);
-                    context.getJassembly().toX0();
-                    context.getJassembly().constant(multEnd);
-                    context.getJassembly().xor();
-                    context.getJassembly().toX0();
+                    code.mov(Register.BX, Register.AX);
+                    code.mov(Register.AX, Register.SB);
 
-                    context.getJassembly().fromSB();
-                    context.getJassembly().any();
+                    code.setLabel(multStart);
+                    code.mov(multBody, Register.AX);
+                    code.mov(Register.AX, Register.BX);
+                    code.mov(multEnd, Register.AX);
+                    code.xor(ax(), bx());
+                    code.mov(Register.AX, Register.BX);
 
-                    context.getJassembly().and();
-                    context.getJassembly().toX0();
-                    context.getJassembly().constant(multEnd);
-                    context.getJassembly().xor();
-                    context.getJassembly().jump();
+                    code.mov(Register.SB, Register.AX);
+                    code.any();
 
-                    context.getJassembly().labelNext(multBody);
-                    context.getJassembly().constant(1);
-                    context.getJassembly().toX0();
-                    context.getJassembly().fromSB();
-                    context.getJassembly().and();
-                    context.getJassembly().any();
-                    context.getJassembly().toX0();
-                    context.getJassembly().fromX1();
-                    context.getJassembly().and();
-                    context.getJassembly().toX0();
+                    code.and(ax(), bx());
+                    code.mov(Register.AX, Register.BX);
+                    code.mov(multEnd, Register.AX);
+                    code.xor(ax(), bx());
+                    code.jump(ax());
 
-                    context.getJassembly().stackPop();
-                    context.getJassembly().add();
-                    context.getJassembly().stackPush();
+                    code.setLabel(multBody);
+                    code.mov(1, Register.AX);
+                    code.mov(Register.AX, Register.BX);
+                    code.mov(Register.SB, Register.AX);
+                    code.and(ax(), bx());
+                    code.any();
+                    code.mov(Register.AX, Register.BX);
+                    code.mov(Register.CX, Register.AX);
+                    code.and(ax(), bx());
+                    code.mov(Register.AX, Register.BX);
 
-                    context.getJassembly().constant(1);
-                    context.getJassembly().toX0();
+                    code.pop(Register.AX);
+                    code.add(ax(), bx());
+                    code.push(Register.AX);
 
-                    context.getJassembly().fromX1();
-                    context.getJassembly().lshift();
-                    context.getJassembly().toX1();
+                    code.mov(1, Register.AX);
+                    code.mov(Register.AX, Register.BX);
 
-                    context.getJassembly().fromSB();
-                    context.getJassembly().rshift();
-                    context.getJassembly().toSB();
+                    code.mov(Register.CX, Register.AX);
+                    code.lshift(ax(), bx());
+                    code.mov(Register.AX, Register.CX);
 
-                    context.getJassembly().constant(multStart);
-                    context.getJassembly().jump();
+                    code.mov(Register.SB, Register.AX);
+                    code.rshift(ax(), bx());
+                    code.mov(Register.AX, Register.SB);
 
-                    context.getJassembly().labelNext(multEnd);
-                    context.getJassembly().stackPop();
-                    context.getJassembly().toX0();
-                    context.getJassembly().stackPop();
-                    context.getJassembly().toSB();
-                    context.getJassembly().fromX0();
+                    code.mov(multStart, Register.AX);
+                    code.jump(ax());
+
+                    code.setLabel(multEnd);
+                    code.pop(Register.AX);
+                    code.mov(Register.AX, Register.BX);
+                    code.pop(Register.AX);
+                    code.mov(Register.AX, Register.SB);
+                    code.mov(Register.BX, Register.AX);
                     break;
                 default:
                     throw new AssertionError(binary.getOperator());
@@ -445,6 +454,42 @@ public class CodeGenerator {
             return;
         }
         throw new UnsupportedOperationException(expression.toString());
+    }
+
+    private static JassemblyExpression ax() {
+        return new RegisterExpression(Register.AX);
+    }
+
+    private static JassemblyExpression bx() {
+        return new RegisterExpression(Register.BX);
+    }
+
+    private static JassemblyExpression cx() {
+        return new RegisterExpression(Register.CX);
+    }
+
+    private static JassemblyExpression sp() {
+        return new RegisterExpression(Register.SP);
+    }
+
+    private static JassemblyExpression sb() {
+        return new RegisterExpression(Register.SB);
+    }
+
+    private static JassemblyExpression ix() {
+        return new RegisterExpression(Register.IX);
+    }
+
+    private static JassemblyExpression pc() {
+        return new RegisterExpression(Register.PC);
+    }
+
+    private static JassemblyExpression none() {
+        return new RegisterExpression(Register.NONE);
+    }
+
+    public List<JassemblyInstruction> getInstructions() {
+        return code.getInstructions();
     }
 
 }
