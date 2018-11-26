@@ -66,7 +66,7 @@ public class TestPrograms {
         System.out.println(name);
         List<Integer> program = compiler.compile(loadFile(name), instructionSet);
         long result = compute(program, 16, 200);
-        assertEquals(55, result);
+        assertEquals(13, result);
     }
 
     @Test
