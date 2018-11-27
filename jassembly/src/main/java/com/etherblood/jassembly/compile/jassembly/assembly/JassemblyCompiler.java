@@ -9,6 +9,8 @@ import com.etherblood.jassembly.compile.jassembly.assembly.instructions.BinaryOp
 import com.etherblood.jassembly.compile.jassembly.assembly.instructions.ConditionalJump;
 import com.etherblood.jassembly.compile.jassembly.assembly.instructions.JassemblyInstruction;
 import com.etherblood.jassembly.compile.jassembly.assembly.instructions.Label;
+import com.etherblood.jassembly.compile.jassembly.assembly.instructions.Pop;
+import com.etherblood.jassembly.compile.jassembly.assembly.instructions.Push;
 import com.etherblood.jassembly.compile.jassembly.assembly.instructions.Read;
 import com.etherblood.jassembly.compile.jassembly.assembly.instructions.Terminate;
 import com.etherblood.jassembly.compile.jassembly.assembly.instructions.UnaryOperation;
@@ -40,6 +42,23 @@ public class JassemblyCompiler {
             Terminate terminate = (Terminate) instruction;
             consumer.constant(terminate.getExitCode().ordinal(), Register.CX);
             consumer.instruction(consumer.map().terminate());
+            return;
+        }
+        if (instruction instanceof Push) {
+            Push push = (Push) instruction;
+            Register from = toRegister(push.getFrom());
+            if (from == null) {
+                from = Register.AX;
+                resolve(push.getFrom(), from, consumer);
+            }
+            consumer.instruction(consumer.map().write(from, Register.SP));
+            consumer.instruction(consumer.map().decrement(Register.SP, Register.SP));
+            return;
+        }
+        if (instruction instanceof Pop) {
+            Pop pop = (Pop) instruction;
+            consumer.instruction(consumer.map().increment(Register.SP, Register.SP));
+            consumer.instruction(consumer.map().read(Register.SP, pop.getTo()));
             return;
         }
         if (instruction instanceof Write) {
@@ -288,7 +307,9 @@ public class JassemblyCompiler {
     private void resolve(JassemblyExpression expression, Register register, Jmachine consumer) {
         if (expression instanceof RegisterExpression) {
             RegisterExpression registerExpression = (RegisterExpression) expression;
-            consumer.instruction(consumer.map().move(registerExpression.getRegister(), register));
+            if (registerExpression.getRegister() != register) {
+                consumer.instruction(consumer.map().move(registerExpression.getRegister(), register));
+            }
             return;
         }
         if (expression instanceof LabelExpression) {

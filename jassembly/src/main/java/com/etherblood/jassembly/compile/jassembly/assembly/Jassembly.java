@@ -13,6 +13,8 @@ import com.etherblood.jassembly.compile.jassembly.assembly.instructions.BinaryOp
 import com.etherblood.jassembly.compile.jassembly.assembly.instructions.ConditionalJump;
 import com.etherblood.jassembly.compile.jassembly.assembly.instructions.ExitCode;
 import com.etherblood.jassembly.compile.jassembly.assembly.instructions.Label;
+import com.etherblood.jassembly.compile.jassembly.assembly.instructions.Pop;
+import com.etherblood.jassembly.compile.jassembly.assembly.instructions.Push;
 import com.etherblood.jassembly.compile.jassembly.assembly.instructions.Read;
 import com.etherblood.jassembly.compile.jassembly.assembly.instructions.Terminate;
 import com.etherblood.jassembly.compile.jassembly.assembly.instructions.Write;
@@ -101,13 +103,11 @@ public class Jassembly {
     }
 
     public void push(JassemblyExpression value) {
-        write(value, register(Register.SP));
-        dec(Register.SP);
+        add(new Push(value));
     }
 
     public void pop(Register to) {
-        inc(Register.SP);
-        read(register(Register.SP), to);
+        add(new Pop(to));
     }
 
     public void unary(JassemblyExpression value, UnaryOperator operator, Register to) {
@@ -134,11 +134,11 @@ public class Jassembly {
         binary(a, b, BinaryOperator.XOR, Register.AX);
     }
 
-    public void lshift(JassemblyExpression a, JassemblyExpression b) {
+    public void leftShift(JassemblyExpression a, JassemblyExpression b) {
         binary(a, b, BinaryOperator.LSHIFT, Register.AX);
     }
 
-    public void rshift(JassemblyExpression a, JassemblyExpression b) {
+    public void rightShift(JassemblyExpression a, JassemblyExpression b) {
         binary(a, b, BinaryOperator.RSHIFT, Register.AX);
     }
 

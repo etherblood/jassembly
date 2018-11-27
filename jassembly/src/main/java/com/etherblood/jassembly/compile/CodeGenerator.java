@@ -297,10 +297,10 @@ public class CodeGenerator {
                     code.xor(ax(), bx());
                     break;
                 case LSHIFT:
-                    code.lshift(ax(), bx());
+                    code.leftShift(ax(), bx());
                     break;
                 case RSHIFT:
-                    code.rshift(ax(), bx());
+                    code.rightShift(ax(), bx());
                     break;
                 case LESS_OR_EQUAL:
                     code.dec();
