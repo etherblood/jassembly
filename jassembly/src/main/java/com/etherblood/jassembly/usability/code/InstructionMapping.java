@@ -66,4 +66,7 @@ public interface InstructionMapping {
 
     MachineInstruction xor(Register a, Register b, Register c);
 
+    boolean writesTo(MachineInstruction instruction, Register register);
+
+    boolean readsFrom(MachineInstruction instruction, Register register);
 }

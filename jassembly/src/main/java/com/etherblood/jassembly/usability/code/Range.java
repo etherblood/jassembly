@@ -12,4 +12,8 @@ public class Range {
         this.offset = offset;
         this.length = length;
     }
+
+    public long getMask() {
+        return ((1 << length) - 1) << offset;
+    }
 }

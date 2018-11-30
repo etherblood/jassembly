@@ -245,4 +245,20 @@ public class MachineInstructions implements InstructionMapping {
 
         }
     }
+
+    @Override
+    public boolean writesTo(MachineInstruction instruction, Register register) {
+        long expected = set(W_ADR, address(register));
+        long actual = W_ADR.getMask() & instruction.getControlFlags();
+        return expected == actual;
+    }
+
+    @Override
+    public boolean readsFrom(MachineInstruction instruction, Register register) {
+        long expected0 = set(R0_ADR, address(register));
+        long expected1 = set(R1_ADR, address(register));
+        long actual0 = R0_ADR.getMask() & instruction.getControlFlags();
+        long actual1 = R1_ADR.getMask() & instruction.getControlFlags();
+        return expected0 == actual0 || expected1 == actual1;
+    }
 }
