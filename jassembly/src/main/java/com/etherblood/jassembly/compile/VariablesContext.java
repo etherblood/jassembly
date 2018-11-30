@@ -11,14 +11,14 @@ import java.util.Map;
  */
 public class VariablesContext {
 
-    private final Map<String, VariableDeclaration> variables;
+    private final Map<String, VariableMeta> variables;
     private int parameterOffset, variableOffset;
 
     public VariablesContext() {
         this(new HashMap<>(), 3, 0);
     }
 
-    private VariablesContext(Map<String, VariableDeclaration> variableOffsets, int parameterOffset, int variableOffset) {
+    private VariablesContext(Map<String, VariableMeta> variableOffsets, int parameterOffset, int variableOffset) {
         this.variables = variableOffsets;
         this.parameterOffset = parameterOffset;
         this.variableOffset = variableOffset;
@@ -29,7 +29,7 @@ public class VariablesContext {
     }
 
     public void declareParameter(String name, ExpressionType type) {
-        if (variables.put(name, new VariableDeclaration(name, type, parameterOffset)) != null) {
+        if (variables.put(name, new VariableMeta(name, type, parameterOffset)) != null) {
             throw new IllegalStateException("parameter '" + name + "' declared twice.");
         }
         parameterOffset++;
@@ -40,14 +40,14 @@ public class VariablesContext {
     }
 
     public void declareVariable(String name, ExpressionType type) {
-        if (variables.put(name, new VariableDeclaration(name, type, variableOffset)) != null) {
+        if (variables.put(name, new VariableMeta(name, type, variableOffset)) != null) {
             throw new IllegalStateException("variable '" + name + "' declared twice.");
         }
         variableOffset--;
     }
 
-    public VariableDeclaration getDetails(String name) {
-        VariableDeclaration var = variables.get(name);
+    public VariableMeta getDetails(String name) {
+        VariableMeta var = variables.get(name);
         if (var == null) {
             throw new IllegalStateException("tried to access undeclared variable '" + name + "'");
         }

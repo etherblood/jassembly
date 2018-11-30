@@ -22,13 +22,12 @@ public class SimpleCompiler {
 
     private final Lexer lexer = new Lexer();
     private final Parser parser = new Parser();
-    private final CodeGenerator generator = new CodeGenerator();
 
     public List<Integer> compile(String code, MachineInstructionSet instructionSet) {
         InstructionMapping mapping = instructionSet.map();
         List<Token> tokens = lexer.tokenify(code);
         Program ast = parser.parseProgram(tokens.iterator());
-        generator.consume(ast);
+        CodeGenerator generator = new CodeGenerator(ast);
         List<JassemblyInstruction> assemblyInstructions = generator.getInstructions();
         Jmachine jmachine = new Jmachine(mapping, instructionSet);
         new JassemblyCompiler().compile(assemblyInstructions, jmachine);

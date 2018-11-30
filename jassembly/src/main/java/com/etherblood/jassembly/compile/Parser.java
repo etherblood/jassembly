@@ -236,11 +236,13 @@ public class Parser {
                     return new FunctionCallExpression(token.getValue(), arguments.toArray(new Expression[arguments.size()]));
                 }
                 return new VariableExpression(token.getValue());
+            case LITERAL_SINT:
+                return new ConstantExpression(Integer.parseInt(token.getValue()), ExpressionType.SINT);
             case LITERAL_UINT:
-                return new ConstantExpression(Integer.valueOf(token.getValue()));
+                return new ConstantExpression(Integer.parseInt(token.getValue()), ExpressionType.UINT);
             case LITERAL_BOOL:
-                boolean value = Boolean.valueOf(token.getValue());
-                return new ConstantExpression(value ? ~0 : 0);
+                boolean value = Boolean.parseBoolean(token.getValue());
+                return new ConstantExpression(value ? ~0 : 0, ExpressionType.BOOL);
             case OP_NOT:
             case OP_COMPLEMENT: {
                 Expression inner = parseFactor(tokens);

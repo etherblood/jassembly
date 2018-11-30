@@ -15,4 +15,13 @@ public class Program {
     public FunctionDeclaration[] getFunctions() {
         return functions;
     }
+    
+    public FunctionDeclaration getFunction(String identifier) {
+        for (FunctionDeclaration function : functions) {
+            if(function.getIdentifier().equals(identifier)) {
+                return function;
+            }
+        }
+        throw new NullPointerException("Function " + identifier + " does not exist.");
+    }
 }

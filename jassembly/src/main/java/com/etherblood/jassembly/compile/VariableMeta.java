@@ -6,13 +6,13 @@ import com.etherblood.jassembly.compile.ast.expression.ExpressionType;
  *
  * @author Philipp
  */
-public class VariableDeclaration {
+public class VariableMeta {
 
     private final String name;
     private final ExpressionType type;
     private final int offset;
 
-    public VariableDeclaration(String name, ExpressionType type, int offset) {
+    public VariableMeta(String name, ExpressionType type, int offset) {
         this.name = name;
         this.type = type;
         this.offset = offset;

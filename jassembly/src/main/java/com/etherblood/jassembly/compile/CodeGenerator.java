@@ -28,6 +28,7 @@ import com.etherblood.jassembly.compile.jassembly.assembly.expressions.Jassembly
 import com.etherblood.jassembly.compile.jassembly.assembly.expressions.RegisterExpression;
 import com.etherblood.jassembly.compile.jassembly.assembly.instructions.ExitCode;
 import com.etherblood.jassembly.compile.jassembly.assembly.instructions.JassemblyInstruction;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
@@ -37,9 +38,11 @@ import java.util.UUID;
  */
 public class CodeGenerator {
 
+    private final Program program;
     private final Jassembly code = new Jassembly();
 
-    public void consume(Program program) {
+    public CodeGenerator(Program program) {
+        this.program = program;
         CodeGenerationContext context = new CodeGenerationContext();
         functionCall(new FunctionCallExpression("main"), context);
         code.terminate(ExitCode.SUCCESS);
@@ -48,20 +51,31 @@ public class CodeGenerator {
         }
     }
 
-    private void functionCall(FunctionCallExpression call, CodeGenerationContext context) {
-        for (Expression argument : call.getArguments()) {
-            expression(argument, context);
+    private ExpressionType functionCall(FunctionCallExpression call, CodeGenerationContext context) {
+        FunctionDeclaration function = program.getFunction(call.getName());
+        VariableDetails[] parameters = function.getParameters();
+        Expression[] arguments = call.getArguments();
+        if (parameters.length != arguments.length) {
+            throw new UnsupportedOperationException("Function " + function.getIdentifier() + " called with " + arguments.length + " arguments when " + parameters.length + " were expected.");
+        }
+        for (int i = 0; i < arguments.length; i++) {
+            ExpressionType paramType = parameters[i].getType();
+            ExpressionType argType = expression(arguments[i], context);
+            if (argType != paramType) {
+                throw new UnsupportedOperationException("Function " + function.getIdentifier() + " called with " + argType + " as " + i + " argument when " + paramType + " was expected.");
+            }
             code.push(Register.AX);
         }
         code.call(call.getName());
         code.mov(Register.CX, Register.AX);
-        for (Expression argument : call.getArguments()) {
+        for (Expression argument : arguments) {
             code.pop(Register.NONE);
         }
+        return function.getReturnType();
     }
 
     private void functionDeclaration(FunctionDeclaration function, CodeGenerationContext context) {
-        CodeGenerationContext child = context.clearVars();
+        CodeGenerationContext child = context.withFunctionScope(function);
         VariableDetails[] parameters = function.getParameters();
         for (int i = parameters.length - 1; i >= 0; i--) {
             child.getVars().declareParameter(parameters[i]);
@@ -95,7 +109,10 @@ public class CodeGenerator {
             VariableDeclaration declare = (VariableDeclaration) blockItem;
             context.getVars().declareVariable(declare.getVariable());
             if (declare.getExpression() != null) {
-                expression(declare.getExpression(), context);
+                ExpressionType valueType = expression(declare.getExpression(), context);
+                if (declare.getVariable().getType() != valueType) {
+                    throw new UnsupportedOperationException();
+                }
             } else {
                 code.mov(0, Register.AX);
             }
@@ -108,11 +125,14 @@ public class CodeGenerator {
     private void statement(Statement statement, CodeGenerationContext context) {
         if (statement instanceof AssignStatement) {
             AssignStatement assign = (AssignStatement) statement;
-            int variableOffset = context.getVars().getDetails(assign.getVariable()).getOffset();
-            expression(assign.getExpression(), context);
+            VariableMeta variable = context.getVars().getDetails(assign.getVariable());
+            ExpressionType valueType = expression(assign.getExpression(), context);
+            if (variable.getType() != valueType) {
+                throw new UnsupportedOperationException();
+            }
             code.mov(Register.AX, Register.CX);
 
-            code.mov(variableOffset, Register.AX);
+            code.mov(variable.getOffset(), Register.AX);
             code.mov(Register.AX, Register.BX);
             code.mov(Register.SB, Register.AX);
             code.add(ax(), bx());
@@ -127,7 +147,11 @@ public class CodeGenerator {
             return;
         }
         if (statement instanceof ReturnStatement) {
-            expression(((ReturnStatement) statement).getExpression(), context);
+            ExpressionType type = expression(((ReturnStatement) statement).getExpression(), context);
+            ExpressionType returnType = context.getFunction().getReturnType();
+            if (type != returnType) {
+                throw new UnsupportedOperationException();
+            }
             code.mov(Register.AX, Register.CX);
             code.mov(Register.SB, Register.AX);
             code.mov(Register.AX, Register.SP);
@@ -142,7 +166,7 @@ public class CodeGenerator {
             UUID ifId = UUID.randomUUID();
             String ifBlock = "ifBody-" + ifId;
             String end = "endif-" + ifId;
-            
+
             expression(ifElse.getCondition(), context);
             code.conditionalJump(ax(), ifBlock);
             if (ifElse.getElseStatement() != null) {
@@ -165,7 +189,7 @@ public class CodeGenerator {
 
             code.setLabel(body);
             statement(whileStatement.getBody(), context.withLoopLabels(head, end));
-            
+
             code.setLabel(head);
             expression(whileStatement.getCondition(), context);
             code.conditionalJump(ax(), body);
@@ -193,44 +217,47 @@ public class CodeGenerator {
         throw new UnsupportedOperationException(statement.toString());
     }
 
-    private void expression(Expression expression, CodeGenerationContext context) {
+    private ExpressionType expression(Expression expression, CodeGenerationContext context) {
         if (expression instanceof FunctionCallExpression) {
-            functionCall((FunctionCallExpression) expression, context);
-            return;
+            return functionCall((FunctionCallExpression) expression, context);
         }
         if (expression instanceof VariableExpression) {
             VariableExpression variable = (VariableExpression) expression;
-            int variableOffset = context.getVars().getDetails(variable.getName()).getOffset();
-            code.mov(variableOffset, Register.AX);
-            code.mov(Register.AX, Register.BX);
-            code.mov(Register.SB, Register.AX);
-            code.add(ax(), bx());
-            code.mov(Register.AX, Register.BX);
-
-            code.read(bx(), Register.AX);
-            return;
+            VariableMeta details = context.getVars().getDetails(variable.getName());
+            code.mov(details.getOffset(), Register.AX);
+            code.add(ax(), sb());
+            code.read(ax(), Register.AX);
+            return details.getType();
         }
         if (expression instanceof ConstantExpression) {
-            code.mov(((ConstantExpression) expression).getValue(), Register.AX);
-            return;
+            ConstantExpression constant = (ConstantExpression) expression;
+            code.mov(constant.getValue(), Register.AX);
+            return constant.getType();
         }
         if (expression instanceof UnaryOperationExpression) {
             UnaryOperationExpression unary = (UnaryOperationExpression) expression;
-            expression(unary.getExpression(), context);
+            ExpressionType type = expression(unary.getExpression(), context);
             switch (unary.getOperator()) {
                 case COMPLEMENT:
                     code.complement();
-                    break;
+                    return type;
                 case NEGATE:
+                    requireType(type, "Can't negate " + type + ".", ExpressionType.UINT, ExpressionType.SINT);
                     code.negate();
-                    break;
+                    return type;
                 case ANY:
+                    requireType(type, "Any(" + type + ") not supported.", ExpressionType.UINT);
                     code.any();
                     break;
+                case CAST_TO_BOOL:
+                    return ExpressionType.BOOL;
+                case CAST_TO_SINT:
+                    return ExpressionType.SINT;
+                case CAST_TO_UINT:
+                    return ExpressionType.UINT;
                 default:
                     throw new AssertionError(unary.getOperator());
             }
-            return;
         }
         if (expression instanceof BinaryOperationExpression) {
             BinaryOperationExpression binary = (BinaryOperationExpression) expression;
@@ -238,35 +265,41 @@ public class CodeGenerator {
                 UUID lazyOrId = UUID.randomUUID();
                 String skip = "lazyOrSkip-" + lazyOrId;
 
-                expression(binary.getA(), context);
+                ExpressionType typeA = expression(binary.getA(), context);
                 code.mov(Register.AX, Register.CX);
                 code.conditionalJump(cx(), skip);
-                expression(binary.getB(), context);
+                ExpressionType typeB = expression(binary.getB(), context);
                 code.mov(Register.AX, Register.CX);
 
                 code.setLabel(skip);
                 code.mov(Register.CX, Register.AX);
-                return;
+                String errorMessage = typeA + " || " + typeB + " not supported.";
+                requireType(typeA, errorMessage, ExpressionType.BOOL);
+                requireType(typeB, errorMessage, ExpressionType.BOOL);
+                return ExpressionType.BOOL;
             }
             if (binary.getOperator() == BinaryOperator.LAZY_AND) {
                 UUID lazyAndId = UUID.randomUUID();
                 String skip = "lazyAndSkip-" + lazyAndId;
 
-                expression(binary.getA(), context);
+                ExpressionType typeA = expression(binary.getA(), context);
                 code.mov(Register.AX, Register.CX);
                 code.complement();
                 code.conditionalJump(ax(), skip);
-                expression(binary.getB(), context);
+                ExpressionType typeB = expression(binary.getB(), context);
                 code.mov(Register.AX, Register.CX);
 
                 code.setLabel(skip);
                 code.mov(Register.CX, Register.AX);
-                return;
+                String errorMessage = typeA + " && " + typeB + " not supported.";
+                requireType(typeA, errorMessage, ExpressionType.BOOL);
+                requireType(typeB, errorMessage, ExpressionType.BOOL);
+                return ExpressionType.BOOL;
             }
 
-            expression(binary.getA(), context);
+            ExpressionType typeA = expression(binary.getA(), context);
             code.push(Register.AX);
-            expression(binary.getB(), context);
+            ExpressionType typeB = expression(binary.getB(), context);
             code.mov(Register.AX, Register.BX);
             code.pop(Register.AX);
             switch (binary.getOperator()) {
@@ -274,32 +307,62 @@ public class CodeGenerator {
                     code.xor(ax(), bx());
                     code.any();
                     code.complement();
-                    break;
+                    if (typeA != typeB) {
+                        throw new UnsupportedOperationException();
+                    }
+                    return ExpressionType.BOOL;
                 case NOT_EQUAL:
                     code.xor(ax(), bx());
                     code.any();
-                    break;
+                    if (typeA != typeB) {
+                        throw new UnsupportedOperationException();
+                    }
+                    return ExpressionType.BOOL;
                 case ADD:
                     code.add(ax(), bx());
-                    break;
+                    if (typeA != typeB) {
+                        throw new UnsupportedOperationException();
+                    }
+                    requireType(typeA, null, ExpressionType.SINT, ExpressionType.UINT);
+                    return typeA;
                 case SUB:
                     code.sub(ax(), bx());
-                    break;
+                    if (typeA != typeB) {
+                        throw new UnsupportedOperationException();
+                    }
+                    requireType(typeA, null, ExpressionType.SINT, ExpressionType.UINT);
+                    return typeA;
                 case OR:
                     code.or(ax(), bx());
-                    break;
+                    if (typeA != typeB) {
+                        throw new UnsupportedOperationException();
+                    }
+                    requireType(typeA, null, ExpressionType.BOOL, ExpressionType.UINT);
+                    return typeA;
                 case AND:
                     code.and(ax(), bx());
-                    break;
+                    if (typeA != typeB) {
+                        throw new UnsupportedOperationException();
+                    }
+                    requireType(typeA, null, ExpressionType.BOOL, ExpressionType.UINT);
+                    return typeA;
                 case XOR:
                     code.xor(ax(), bx());
-                    break;
+                    if (typeA != typeB) {
+                        throw new UnsupportedOperationException();
+                    }
+                    requireType(typeA, null, ExpressionType.BOOL, ExpressionType.UINT);
+                    return typeA;
                 case LSHIFT:
                     code.leftShift(ax(), bx());
-                    break;
+                    requireType(typeA, null, ExpressionType.UINT);
+                    requireType(typeB, null, ExpressionType.UINT);
+                    return ExpressionType.UINT;
                 case RSHIFT:
                     code.rightShift(ax(), bx());
-                    break;
+                    requireType(typeA, null, ExpressionType.UINT);
+                    requireType(typeB, null, ExpressionType.UINT);
+                    return ExpressionType.UINT;
                 case LESS_OR_EQUAL:
                     code.dec();
                 case LESS_THAN:
@@ -308,7 +371,11 @@ public class CodeGenerator {
                     code.signBit(Register.AX);
                     code.and(ax(), bx());
                     code.any();
-                    break;
+                    if (typeA != typeB) {
+                        throw new UnsupportedOperationException();
+                    }
+                    requireType(typeA, null, ExpressionType.SINT, ExpressionType.UINT);
+                    return ExpressionType.BOOL;
                 case GREATER_THAN:
                     code.dec();
                 case GREATER_OR_EQUAL:
@@ -318,16 +385,29 @@ public class CodeGenerator {
                     code.and(ax(), bx());
                     code.any();
                     code.complement();
-                    break;
+                    if (typeA != typeB) {
+                        throw new UnsupportedOperationException();
+                    }
+                    requireType(typeA, null, ExpressionType.SINT, ExpressionType.UINT);
+                    return ExpressionType.BOOL;
                 case MULT:
                     code.mult(ax(), bx());
-                    break;
+                    if (typeA != typeB) {
+                        throw new UnsupportedOperationException();
+                    }
+                    requireType(typeA, null, ExpressionType.SINT, ExpressionType.UINT);
+                    return typeA;
                 default:
                     throw new AssertionError(binary.getOperator());
             }
-            return;
         }
         throw new UnsupportedOperationException(expression.toString());
+    }
+
+    private static void requireType(ExpressionType type, String message, ExpressionType... types) {
+        if (!Arrays.asList(types).contains(type)) {
+            throw new UnsupportedOperationException(message);
+        }
     }
 
     private static JassemblyExpression ax() {

@@ -23,7 +23,7 @@ public class Main {
      * @param args the command line arguments
      */
     public static void main(String[] args) throws Exception {
-        String sourceFile = "12x9.txt";
+        String sourceFile = "3x5.txt";
         String sampleCode = readFile(sourceFile);
         MachineInstructions machineInstructions = new MachineInstructions();
         MachineInstructionSet instructionSet = new DefaultMachineInstructionSet(machineInstructions);
