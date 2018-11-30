@@ -2,6 +2,7 @@ package com.etherblood.jassembly.compile;
 
 import com.etherblood.jassembly.compile.ast.FunctionDeclaration;
 import com.etherblood.jassembly.compile.ast.Program;
+import com.etherblood.jassembly.compile.ast.VariableDetails;
 import com.etherblood.jassembly.compile.ast.statement.block.Block;
 import com.etherblood.jassembly.compile.ast.statement.block.BlockItem;
 import com.etherblood.jassembly.compile.ast.statement.ReturnStatement;
@@ -61,7 +62,7 @@ public class CodeGenerator {
 
     private void functionDeclaration(FunctionDeclaration function, CodeGenerationContext context) {
         CodeGenerationContext child = context.clearVars();
-        String[] parameters = function.getParameters();
+        VariableDetails[] parameters = function.getParameters();
         for (int i = parameters.length - 1; i >= 0; i--) {
             child.getVars().declareParameter(parameters[i]);
         }
@@ -107,7 +108,7 @@ public class CodeGenerator {
     private void statement(Statement statement, CodeGenerationContext context) {
         if (statement instanceof AssignStatement) {
             AssignStatement assign = (AssignStatement) statement;
-            int variableOffset = context.getVars().getOffset(assign.getVariable());
+            int variableOffset = context.getVars().getDetails(assign.getVariable()).getOffset();
             expression(assign.getExpression(), context);
             code.mov(Register.AX, Register.CX);
 
@@ -199,7 +200,7 @@ public class CodeGenerator {
         }
         if (expression instanceof VariableExpression) {
             VariableExpression variable = (VariableExpression) expression;
-            int variableOffset = context.getVars().getOffset(variable.getName());
+            int variableOffset = context.getVars().getDetails(variable.getName()).getOffset();
             code.mov(variableOffset, Register.AX);
             code.mov(Register.AX, Register.BX);
             code.mov(Register.SB, Register.AX);

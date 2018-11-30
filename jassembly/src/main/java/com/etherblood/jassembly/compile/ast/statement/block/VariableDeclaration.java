@@ -1,19 +1,20 @@
 package com.etherblood.jassembly.compile.ast.statement.block;
 
+import com.etherblood.jassembly.compile.ast.VariableDetails;
 import com.etherblood.jassembly.compile.ast.expression.Expression;
 import java.util.Objects;
 
 public class VariableDeclaration implements BlockItem {
 
-    private final String variable;
+    private final VariableDetails variable;
     private final Expression expression;
 
-    public VariableDeclaration(String variable, Expression expression) {
+    public VariableDeclaration(VariableDetails variable, Expression expression) {
         this.variable = Objects.requireNonNull(variable);
         this.expression = expression;
     }
 
-    public String getVariable() {
+    public VariableDetails getVariable() {
         return variable;
     }
 

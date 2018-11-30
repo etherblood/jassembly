@@ -2,6 +2,7 @@ package com.etherblood.jassembly.compile;
 
 import com.etherblood.jassembly.compile.ast.FunctionDeclaration;
 import com.etherblood.jassembly.compile.ast.Program;
+import com.etherblood.jassembly.compile.ast.VariableDetails;
 import com.etherblood.jassembly.compile.ast.statement.block.Block;
 import com.etherblood.jassembly.compile.ast.statement.block.BlockItem;
 import com.etherblood.jassembly.compile.ast.statement.ReturnStatement;
@@ -74,25 +75,40 @@ public class Parser {
     }
 
     private FunctionDeclaration parseFunctionDeclaration(ConsumableIterator<Token> tokens) {
-        consume(tokens, TokenType.KEYWORD_TYPE);
+        ExpressionType returnType = parseType(tokens);
         Token identifier = tokens.pop();
         assertTokenType(identifier, TokenType.IDENTIFIER);
         consume(tokens, TokenType.OPEN_PAREN);
-        List<String> parameters = new ArrayList<>();
+        List<VariableDetails> parameters = new ArrayList<>();
         boolean comma = false;
         while (tokens.peek().getType() != TokenType.CLOSE_PAREN) {
             if (comma) {
                 consume(tokens, TokenType.COMMA);
             }
             comma = true;
-            consume(tokens, TokenType.KEYWORD_TYPE);
+            ExpressionType paramType = parseType(tokens);
             Token parameter = tokens.pop();
             assertTokenType(parameter, TokenType.IDENTIFIER);
-            parameters.add(parameter.getValue());
+            parameters.add(new VariableDetails(parameter.getValue(), paramType));
         }
         consume(tokens, TokenType.CLOSE_PAREN);
         Block block = parseBlock(tokens);
-        return new FunctionDeclaration(identifier.getValue(), block, parameters.toArray(new String[parameters.size()]));
+        return new FunctionDeclaration(identifier.getValue(), returnType, block, parameters.toArray(new VariableDetails[parameters.size()]));
+    }
+    
+    private ExpressionType parseType(ConsumableIterator<Token> tokens) {
+         Token typeToken = tokens.pop();
+        assertTokenType(typeToken, TokenType.KEYWORD_TYPE);
+        switch(typeToken.getValue()) {
+            case "uint":
+                return ExpressionType.UINT;
+            case "sint":
+                return ExpressionType.SINT;
+            case "bool":
+                return ExpressionType.BOOL;
+            default:
+                throw new AssertionError(typeToken.getValue());
+        }
     }
 
     private Block parseBlock(ConsumableIterator<Token> tokens) {
@@ -108,7 +124,7 @@ public class Parser {
     private BlockItem parseBlockItem(ConsumableIterator<Token> tokens) {
         TokenType type = tokens.peek().getType();
         if (type == TokenType.KEYWORD_TYPE) {
-            consume(tokens, TokenType.KEYWORD_TYPE);
+            ExpressionType variableType = parseType(tokens);
             Token token = tokens.pop();
             assertTokenType(token, TokenType.IDENTIFIER);
             String variable = token.getValue();
@@ -120,7 +136,7 @@ public class Parser {
                 expression = null;
             }
             consume(tokens, TokenType.SEMICOLON);
-            return new VariableDeclaration(variable, expression);
+            return new VariableDeclaration(new VariableDetails(variable, variableType), expression);
         }
         return parseStatement(tokens);
     }

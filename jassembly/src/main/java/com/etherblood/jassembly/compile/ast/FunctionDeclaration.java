@@ -1,5 +1,6 @@
 package com.etherblood.jassembly.compile.ast;
 
+import com.etherblood.jassembly.compile.ast.expression.ExpressionType;
 import com.etherblood.jassembly.compile.ast.statement.block.Block;
 
 /**
@@ -9,11 +10,13 @@ import com.etherblood.jassembly.compile.ast.statement.block.Block;
 public class FunctionDeclaration {
 
     private final String identifier;
+    private final ExpressionType returnType;
     private final Block body;
-    private final String[] parameters;
+    private final VariableDetails[] parameters;
 
-    public FunctionDeclaration(String identifier, Block body, String... parameters) {
+    public FunctionDeclaration(String identifier, ExpressionType returnType, Block body, VariableDetails... parameters) {
         this.identifier = identifier;
+        this.returnType = returnType;
         this.body = body;
         this.parameters = parameters;
     }
@@ -22,11 +25,15 @@ public class FunctionDeclaration {
         return identifier;
     }
 
+    public ExpressionType getReturnType() {
+        return returnType;
+    }
+
     public Block getBody() {
         return body;
     }
 
-    public String[] getParameters() {
+    public VariableDetails[] getParameters() {
         return parameters;
     }
 }
