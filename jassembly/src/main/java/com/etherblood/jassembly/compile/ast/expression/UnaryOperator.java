@@ -7,6 +7,8 @@ package com.etherblood.jassembly.compile.ast.expression;
 public enum UnaryOperator {
     COMPLEMENT,
     NEGATE,
-    TO_BOOL,
-    TO_INT;
+    ANY,
+    CAST_TO_UINT,
+    CAST_TO_SINT,
+    CAST_TO_BOOL;
 }

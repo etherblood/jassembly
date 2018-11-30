@@ -9,6 +9,7 @@ import com.etherblood.jassembly.compile.ast.expression.BinaryOperationExpression
 import com.etherblood.jassembly.compile.ast.expression.BinaryOperator;
 import com.etherblood.jassembly.compile.ast.expression.ConstantExpression;
 import com.etherblood.jassembly.compile.ast.expression.Expression;
+import com.etherblood.jassembly.compile.ast.expression.ExpressionType;
 import com.etherblood.jassembly.compile.ast.expression.FunctionCallExpression;
 import com.etherblood.jassembly.compile.ast.expression.UnaryOperationExpression;
 import com.etherblood.jassembly.compile.ast.expression.VariableExpression;
@@ -222,12 +223,8 @@ public class CodeGenerator {
                 case NEGATE:
                     code.negate();
                     break;
-                case TO_BOOL:
+                case ANY:
                     code.any();
-                    break;
-                case TO_INT:
-                    code.mov(1, Register.BX);
-                    code.and(ax(), bx());
                     break;
                 default:
                     throw new AssertionError(unary.getOperator());

@@ -2,8 +2,8 @@ uint main() {
     uint a = 128;
     uint b = 2000;
     uint c = 0;
-    while (bool(a)) {
-        if (bool(b & 1)) {
+    while (a != 0) {
+        if ((b & 1) != 0) {
             c = c + a;
         }
         b = b >> 1;

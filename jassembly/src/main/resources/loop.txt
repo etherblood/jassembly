@@ -1,7 +1,7 @@
 uint main() {
     uint a = 7;
     while(true) {
-        if(bool(a)) {
+        if(a != 0) {
             a = a - 1;
         } else break;
         continue;

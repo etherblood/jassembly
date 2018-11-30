@@ -11,7 +11,7 @@ uint five() {
 }
 uint mult(uint a, uint b) {
     uint c = 0;
-    while(bool(a)) {
+    while(a != 0) {
         a = a - 1;
         c = c + b;
     }

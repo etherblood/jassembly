@@ -7,8 +7,10 @@ import com.etherblood.jassembly.compile.ast.statement.block.BlockItem;
 import com.etherblood.jassembly.compile.ast.statement.ReturnStatement;
 import com.etherblood.jassembly.compile.ast.expression.BinaryOperationExpression;
 import com.etherblood.jassembly.compile.ast.expression.BinaryOperator;
+import com.etherblood.jassembly.compile.ast.expression.BinaryOperatorUtil;
 import com.etherblood.jassembly.compile.ast.expression.ConstantExpression;
 import com.etherblood.jassembly.compile.ast.expression.Expression;
+import com.etherblood.jassembly.compile.ast.expression.ExpressionType;
 import com.etherblood.jassembly.compile.ast.expression.FunctionCallExpression;
 import com.etherblood.jassembly.compile.ast.expression.UnaryOperationExpression;
 import com.etherblood.jassembly.compile.ast.expression.UnaryOperator;
@@ -36,17 +38,6 @@ import java.util.Map;
  */
 public class Parser {
 
-    private static final BinaryOperator[][] BINARY_OPERATOR_PRECEDENCE = {
-        {BinaryOperator.LAZY_OR},
-        {BinaryOperator.LAZY_AND},
-        {BinaryOperator.OR},
-        {BinaryOperator.XOR},
-        {BinaryOperator.AND},
-        {BinaryOperator.EQUAL, BinaryOperator.NOT_EQUAL},
-        {BinaryOperator.LESS_THAN, BinaryOperator.LESS_OR_EQUAL, BinaryOperator.GREATER_THAN, BinaryOperator.GREATER_OR_EQUAL},
-        {BinaryOperator.LSHIFT, BinaryOperator.RSHIFT},
-        {BinaryOperator.ADD, BinaryOperator.SUB},
-        {BinaryOperator.MULT, BinaryOperator.DIV, BinaryOperator.REMAINDER}};
     private static final Map<TokenType, BinaryOperator> TOKEN_TO_BINARY_OPERATOR = new EnumMap<>(TokenType.class);
 
     static {
@@ -193,10 +184,10 @@ public class Parser {
     }
 
     private Expression parseExpression(int precedence, ConsumableIterator<Token> tokens) {
-        if (precedence >= BINARY_OPERATOR_PRECEDENCE.length) {
+        List<BinaryOperator> precedenceOperators = Arrays.asList(BinaryOperatorUtil.operatorsByPrecedence(precedence));
+        if (precedenceOperators.isEmpty()) {
             return parseFactor(tokens);
         }
-        List<BinaryOperator> precedenceOperators = Arrays.asList(BINARY_OPERATOR_PRECEDENCE[precedence]);
         Expression a = parseExpression(precedence + 1, tokens);
         while (true) {
             TokenType type = tokens.peek().getType();
@@ -253,10 +244,12 @@ public class Parser {
                 Expression inner = parseExpression(tokens);
                 consume(tokens, TokenType.CLOSE_PAREN);
                 switch (token.getValue()) {
-                    case "int":
-                        return new UnaryOperationExpression(UnaryOperator.TO_INT, inner);
+                    case "uint":
+                        return new UnaryOperationExpression(UnaryOperator.CAST_TO_UINT, inner);
+                    case "sint":
+                        return new UnaryOperationExpression(UnaryOperator.CAST_TO_SINT, inner);
                     case "bool":
-                        return new UnaryOperationExpression(UnaryOperator.TO_BOOL, inner);
+                        return new UnaryOperationExpression(UnaryOperator.CAST_TO_BOOL, inner);
                     default:
                         throw new AssertionError(token.getValue());
                 }

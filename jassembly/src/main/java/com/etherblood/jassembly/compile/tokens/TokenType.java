@@ -12,6 +12,9 @@ public enum TokenType {
     CLOSE_BRACE("\\}"),
     SEMICOLON(";"),
     COMMA(","),
+    LITERAL_UINT("[0-9]+"),
+    LITERAL_SINT("[+-][0-9]+"),
+    LITERAL_BOOL("true|false"),
     OP_COMPLEMENT("~"),
     OP_MINUS("-"),
     OP_PLUS("\\+"),
@@ -40,9 +43,6 @@ public enum TokenType {
     KEYWORD_WHILE("while"),
     KEYWORD_BREAK("break"),
     KEYWORD_CONTINUE("continue"),
-    LITERAL_UINT("[0-9]+"),
-    LITERAL_SINT("[+|-][0-9]+"),
-    LITERAL_BOOL("true|false"),
     IDENTIFIER("[a-zA-Z]\\w*");
 
     private final String pattern;
