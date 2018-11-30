@@ -1,7 +1,7 @@
-int main() {
-    int a = 128;
-    int b = 2000;
-    int c = 0;
+uint main() {
+    uint a = 128;
+    uint b = 2000;
+    uint c = 0;
     while (bool(a)) {
         if (bool(b & 1)) {
             c = c + a;

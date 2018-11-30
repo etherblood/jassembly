@@ -1,16 +1,16 @@
-int main() {
-    int a = three();
-    int b = 19;
+uint main() {
+    uint a = three();
+    uint b = 19;
     return mult(five(), a);
 }
-bool three() {
+uint three() {
     return 3;
 }
-int five() {
+uint five() {
     return 2 + 3;
 }
-int mult(int a, int b) {
-    int c = 0;
+uint mult(uint a, uint b) {
+    uint c = 0;
     while(bool(a)) {
         a = a - 1;
         c = c + b;

@@ -34,13 +34,14 @@ public enum TokenType {
     OP_ASSIGN("="),
     OP_NOT("!"),
     KEYWORD_RETURN("return"),
-    KEYWORD_TYPE("int|bool"),
+    KEYWORD_TYPE("uint|sint|bool"),
     KEYWORD_IF("if"),
     KEYWORD_ELSE("else"),
     KEYWORD_WHILE("while"),
     KEYWORD_BREAK("break"),
     KEYWORD_CONTINUE("continue"),
-    LITERAL_INT("[0-9]+"),
+    LITERAL_UINT("[0-9]+"),
+    LITERAL_SINT("[+|-][0-9]+"),
     LITERAL_BOOL("true|false"),
     IDENTIFIER("[a-zA-Z]\\w*");
 

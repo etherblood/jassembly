@@ -1,4 +1,4 @@
-int fib(int n) {
+uint fib(uint n) {
     if (n == 1 || n == 0) {
         return n;
     } else {
@@ -6,7 +6,7 @@ int fib(int n) {
     }
 }
 
-int main() {
-    int n = 7;
+uint main() {
+    uint n = 7;
     return fib(n);
 }

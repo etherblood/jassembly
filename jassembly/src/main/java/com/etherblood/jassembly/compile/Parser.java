@@ -229,7 +229,7 @@ public class Parser {
                     return new FunctionCallExpression(token.getValue(), arguments.toArray(new Expression[arguments.size()]));
                 }
                 return new VariableExpression(token.getValue());
-            case LITERAL_INT:
+            case LITERAL_UINT:
                 return new ConstantExpression(Integer.valueOf(token.getValue()));
             case LITERAL_BOOL:
                 boolean value = Boolean.valueOf(token.getValue());

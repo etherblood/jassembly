@@ -18,18 +18,18 @@ public class LexerTest {
 
     @Test
     public void lex_0() {
-        String sampleCode = "int main() {\n"
+        String sampleCode = "uint main() {\n"
                 + "    return 2;\n"
                 + "}";
         List<Token> tokens = new Lexer().tokenify(sampleCode);
         assertEquals(Arrays.asList(
-                new Token(TokenType.KEYWORD_TYPE, "int"),
+                new Token(TokenType.KEYWORD_TYPE, "uint"),
                 new Token(TokenType.IDENTIFIER, "main"),
                 new Token(TokenType.OPEN_PAREN, "("),
                 new Token(TokenType.CLOSE_PAREN, ")"),
                 new Token(TokenType.OPEN_BRACE, "{"),
                 new Token(TokenType.KEYWORD_RETURN, "return"),
-                new Token(TokenType.LITERAL_INT, "2"),
+                new Token(TokenType.LITERAL_UINT, "2"),
                 new Token(TokenType.SEMICOLON, ";"),
                 new Token(TokenType.CLOSE_BRACE, "}")
         ), tokens);
