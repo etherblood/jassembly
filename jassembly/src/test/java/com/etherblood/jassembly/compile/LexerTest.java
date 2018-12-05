@@ -1,11 +1,12 @@
 package com.etherblood.jassembly.compile;
 
+import com.etherblood.jassembly.compile.jassembly.language.parsing.Lexer;
 import java.util.Arrays;
 import java.util.List;
 import org.junit.Test;
 import static org.junit.Assert.*;
-import com.etherblood.jassembly.compile.tokens.Token;
-import com.etherblood.jassembly.compile.tokens.TokenType;
+import com.etherblood.jassembly.compile.jassembly.language.parsing.tokens.Token;
+import com.etherblood.jassembly.compile.jassembly.language.parsing.tokens.TokenType;
 
 /**
  *

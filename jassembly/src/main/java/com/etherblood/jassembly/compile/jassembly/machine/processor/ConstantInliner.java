@@ -21,6 +21,13 @@ public class ConstantInliner {
     private final Map<Integer, Map<Register, MachineInstruction>> constantInstructions;
     private final Map<MachineInstruction, Register> readInstructions;
 
+    public ConstantInliner(InstructionMapping mapping, int width) {
+        this(mapping);
+        for (Register register : Register.values()) {
+            constantInstructions.computeIfAbsent(1 << (width - 1), x -> new EnumMap<>(Register.class)).put(register, mapping.constantSignBit(register));
+        }
+    }
+
     public ConstantInliner(InstructionMapping mapping) {
         constantInstructions = new HashMap<>();
         for (Register register : Register.values()) {
@@ -48,7 +55,7 @@ public class ConstantInliner {
 
             if (map != null && prev instanceof LabelledInstruction) {
                 LabelledInstruction lblInstruction = (LabelledInstruction) prev;
-                Register reg = readInstructions.get(lblInstruction.getCommand());
+                Register reg = readInstructions.get(lblInstruction.getInstruction());
                 if (reg != null) {
                     if (!instruction.getLabels().isEmpty()) {
                         throw new UnsupportedOperationException("Label on literals not supported.");

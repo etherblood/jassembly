@@ -43,7 +43,7 @@ public interface InstructionMapping {
     MachineInstruction move(Register a, Register c);
 
     MachineInstruction negate(Register a, Register c);
-    
+
     MachineInstruction noop();
 
     MachineInstruction or(Register a, Register b, Register c);
@@ -65,8 +65,4 @@ public interface InstructionMapping {
     MachineInstruction write(Register a, Register b);
 
     MachineInstruction xor(Register a, Register b, Register c);
-
-    boolean writesTo(MachineInstruction instruction, Register register);
-
-    boolean readsFrom(MachineInstruction instruction, Register register);
 }

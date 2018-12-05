@@ -70,7 +70,7 @@ public class NoopRemover {
         for (Labelled instruction : instructions) {
             if (instruction instanceof LabelledInstruction) {
                 LabelledInstruction lblInstruction = (LabelledInstruction) instruction;
-                if (noops.contains(lblInstruction.getCommand())) {
+                if (noops.contains(lblInstruction.getInstruction())) {
                     pendingLabels.addAll(instruction.getLabels());
                     continue;
                 }

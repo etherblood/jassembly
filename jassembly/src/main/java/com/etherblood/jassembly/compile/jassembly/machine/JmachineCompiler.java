@@ -28,7 +28,7 @@ public class JmachineCompiler {
     private int labelledToCode(Labelled labelled, JmachineContext context) {
         if (labelled instanceof LabelledInstruction) {
             LabelledInstruction instruction = (LabelledInstruction) labelled;
-            return instructionSet.codeByInstruction(instruction.getCommand());
+            return instructionSet.codeByInstruction(instruction.getInstruction());
         }
         if (labelled instanceof LabelledLiteral) {
             LabelledLiteral literal = (LabelledLiteral) labelled;

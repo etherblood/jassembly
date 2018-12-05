@@ -10,7 +10,7 @@ public class LabelledInstruction extends Labelled {
         this.command = command;
     }
 
-    public MachineInstruction getCommand() {
+    public MachineInstruction getInstruction() {
         return command;
     }
 
