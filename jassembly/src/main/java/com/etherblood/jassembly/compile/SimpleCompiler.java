@@ -40,6 +40,9 @@ public class SimpleCompiler {
         commands = new ConstantInliner(mapping).inlineConstants(commands);
         commands = new NoopRemover(mapping).removeNoops(commands);
         commands = new MoveNormalizer(mapping).normalizeMoves(commands);
+//        for (int i = 0; i < commands.size(); i++) {
+//            System.out.println(i + ": " + commands.get(i));
+//        }
         return new JmachineCompiler(instructionSet).toProgram(commands);
     }
 }

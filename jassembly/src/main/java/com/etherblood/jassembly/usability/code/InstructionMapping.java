@@ -38,6 +38,12 @@ public interface InstructionMapping {
 
     MachineInstruction jump(Register a);
 
+    MachineInstruction jumpRelative0(Register a);
+
+    MachineInstruction jumpRelative1(Register a);
+
+    MachineInstruction jumpRelative2(Register a);
+
     MachineInstruction leftShift(Register a, Register b, Register c);
 
     MachineInstruction move(Register a, Register c);

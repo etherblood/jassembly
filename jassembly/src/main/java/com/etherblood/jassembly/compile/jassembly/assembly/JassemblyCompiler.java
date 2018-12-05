@@ -88,7 +88,6 @@ public class JassemblyCompiler {
             return;
         }
         if (instruction instanceof ConditionalJump) {
-            //TODO, AX, BX & CX should not be overwritten?
             ConditionalJump conditionalJump = (ConditionalJump) instruction;
             Register condition = toRegister(conditionalJump.getCondition());
             Register address = toRegister(conditionalJump.getJumpAddress());
@@ -96,23 +95,9 @@ public class JassemblyCompiler {
                 address = findFree(condition);
                 resolve(conditionalJump.getJumpAddress(), address, consumer);
             }
-            consumer.instruction(consumer.map().write(address, Register.SP));
-            resolve(conditionalJump.getCondition(), Register.CX, consumer);
-
-            consumer.instruction(consumer.map().readConstant(Register.AX));
-            consumer.instructionCode(consumer.map().jump(Register.BX));
-            consumer.instruction(consumer.map().readConstant(Register.BX));
-            consumer.instructionCode(consumer.map().noop());
-
-            consumer.instruction(consumer.map().xor(Register.AX, Register.BX, Register.AX));
-            consumer.instruction(consumer.map().and(Register.AX, Register.CX, Register.AX));
-            consumer.instruction(consumer.map().xor(Register.AX, Register.BX, Register.AX));
-            consumer.instruction(consumer.map().read(Register.SP, Register.BX));
-            consumer.instruction(consumer.map().execute(Register.AX));
-            //IX = wait ^ (condition & (wait ^ jump(jumpAddress)))
-            //
-            //with wait == 0 above can be optimized to
-            //IX = condition & jump(jumpAddress)
+            consumer.instruction(consumer.map().jumpRelative1(condition));
+            consumer.instruction(consumer.map().jump(address));
+            consumer.labelNext("notDeadCode-" + UUID.randomUUID());
             return;
         }
         if (instruction instanceof UnaryOperation) {

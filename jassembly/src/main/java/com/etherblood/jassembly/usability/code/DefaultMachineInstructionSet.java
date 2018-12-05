@@ -24,6 +24,13 @@ public class DefaultMachineInstructionSet extends SimpleMachineInstructionSet {
         }
 
         for (Register a : Register.values()) {
+            instructions.add(mapping.jump(a));
+            instructions.add(mapping.jumpRelative0(a));
+            instructions.add(mapping.jumpRelative1(a));
+            instructions.add(mapping.jumpRelative2(a));
+        }
+
+        for (Register a : Register.values()) {
             instructions.add(mapping.readConstant(a));
         }
 

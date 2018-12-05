@@ -114,6 +114,21 @@ public class MachineInstructions implements InstructionMapping {
     }
 
     @Override
+    public MachineInstruction jumpRelative0(Register a) {
+        return new SimpleMachineInstruction("jumpRel0 " + registerString(a), addFlags(a, Register.PC, Register.PC));
+    }
+
+    @Override
+    public MachineInstruction jumpRelative1(Register a) {
+        return new SimpleMachineInstruction("jumpRel1 " + registerString(a), addFlags(a, Register.PC, Register.PC) | set(OP_ARG, 1));
+    }
+
+    @Override
+    public MachineInstruction jumpRelative2(Register a) {
+        return new SimpleMachineInstruction("jumpRel2 " + registerString(a), addFlags(a, Register.PC, Register.PC) | set(OP_ARG, 1) | set(PC_INC, 1));
+    }
+
+    @Override
     public MachineInstruction noop() {
         return new SimpleMachineInstruction("wait", constantZeroFlags(Register.NONE));
     }
