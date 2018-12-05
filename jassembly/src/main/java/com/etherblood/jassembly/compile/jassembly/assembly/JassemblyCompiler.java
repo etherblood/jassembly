@@ -184,45 +184,33 @@ public class JassemblyCompiler {
                     String multStart = "multStart-" + multId;
                     String multBody = "multBody-" + multId;
                     String multEnd = "multEnd-" + multId;
+                    
+                    consumer.instruction(consumer.map().write(Register.SB, Register.SP));
+                    consumer.instruction(consumer.map().decrement(Register.SP, Register.SP));
+
+                    consumer.instruction(consumer.map().write(Register.NONE, Register.SP));
+                    consumer.instruction(consumer.map().decrement(Register.SP, Register.SP));
 
                     consumer.instruction(consumer.map().move(Register.AX, Register.CX));
-                    consumer.instruction(consumer.map().move(Register.SB, Register.AX));
-                    consumer.instruction(consumer.map().write(Register.AX, Register.SP));
-                    consumer.instruction(consumer.map().decrement(Register.SP, Register.SP));
-
-                    consumer.instruction(consumer.map().move(Register.NONE, Register.AX));
-                    consumer.instruction(consumer.map().write(Register.AX, Register.SP));
-                    consumer.instruction(consumer.map().decrement(Register.SP, Register.SP));
-
-                    consumer.instruction(consumer.map().move(Register.BX, Register.AX));
-                    consumer.instruction(consumer.map().move(Register.AX, Register.SB));
+                    consumer.instruction(consumer.map().move(Register.BX, Register.SB));
 
                     consumer.labelNext(multStart);
-                    consumer.constant(multBody, Register.AX);
-                    consumer.instruction(consumer.map().move(Register.AX, Register.BX));
+                    consumer.constant(multBody, Register.BX);
                     consumer.constant(multEnd, Register.AX);
-                    consumer.instruction(consumer.map().xor(Register.AX, Register.BX, Register.AX));
-                    consumer.instruction(consumer.map().move(Register.AX, Register.BX));
+                    consumer.instruction(consumer.map().xor(Register.AX, Register.BX, Register.BX));
 
-                    consumer.instruction(consumer.map().move(Register.SB, Register.AX));
-                    consumer.instruction(consumer.map().any(Register.AX, Register.AX));
+                    consumer.instruction(consumer.map().any(Register.SB, Register.AX));
 
-                    consumer.instruction(consumer.map().and(Register.AX, Register.BX, Register.AX));
-                    consumer.instruction(consumer.map().move(Register.AX, Register.BX));
+                    consumer.instruction(consumer.map().and(Register.AX, Register.BX, Register.BX));
                     consumer.constant(multEnd, Register.AX);
                     consumer.instruction(consumer.map().xor(Register.AX, Register.BX, Register.AX));
                     consumer.instruction(consumer.map().jump(Register.AX));
 
                     consumer.labelNext(multBody);
-                    consumer.constant(1, Register.AX);
-                    consumer.instruction(consumer.map().move(Register.AX, Register.BX));
-                    consumer.instruction(consumer.map().move(Register.SB, Register.AX));
-                    consumer.instruction(consumer.map().and(Register.AX, Register.BX, Register.AX));
+                    consumer.constant(1, Register.BX);
+                    consumer.instruction(consumer.map().and(Register.SB, Register.BX, Register.AX));
                     consumer.instruction(consumer.map().any(Register.AX, Register.AX));
-                    consumer.instruction(consumer.map().move(Register.AX, Register.BX));
-                    consumer.instruction(consumer.map().move(Register.CX, Register.AX));
-                    consumer.instruction(consumer.map().and(Register.AX, Register.BX, Register.AX));
-                    consumer.instruction(consumer.map().move(Register.AX, Register.BX));
+                    consumer.instruction(consumer.map().and(Register.CX, Register.AX, Register.BX));
 
                     consumer.instruction(consumer.map().increment(Register.SP, Register.SP));
                     consumer.instruction(consumer.map().read(Register.SP, Register.AX));
@@ -230,16 +218,9 @@ public class JassemblyCompiler {
                     consumer.instruction(consumer.map().write(Register.AX, Register.SP));
                     consumer.instruction(consumer.map().decrement(Register.SP, Register.SP));
 
-                    consumer.constant(1, Register.AX);
-                    consumer.instruction(consumer.map().move(Register.AX, Register.BX));
-
-                    consumer.instruction(consumer.map().move(Register.CX, Register.AX));
-                    consumer.instruction(consumer.map().leftShift(Register.AX, Register.BX, Register.AX));
-                    consumer.instruction(consumer.map().move(Register.AX, Register.CX));
-
-                    consumer.instruction(consumer.map().move(Register.SB, Register.AX));
-                    consumer.instruction(consumer.map().rightShift(Register.AX, Register.BX, Register.AX));
-                    consumer.instruction(consumer.map().move(Register.AX, Register.SB));
+                    consumer.constant(1, Register.BX);
+                    consumer.instruction(consumer.map().leftShift(Register.CX, Register.BX, Register.CX));
+                    consumer.instruction(consumer.map().rightShift(Register.SB, Register.BX, Register.SB));
 
                     consumer.constant(multStart, Register.AX);
                     consumer.instruction(consumer.map().jump(Register.AX));
@@ -247,11 +228,8 @@ public class JassemblyCompiler {
                     consumer.labelNext(multEnd);
                     consumer.instruction(consumer.map().increment(Register.SP, Register.SP));
                     consumer.instruction(consumer.map().read(Register.SP, Register.AX));
-                    consumer.instruction(consumer.map().move(Register.AX, Register.BX));
                     consumer.instruction(consumer.map().increment(Register.SP, Register.SP));
-                    consumer.instruction(consumer.map().read(Register.SP, Register.AX));
-                    consumer.instruction(consumer.map().move(Register.AX, Register.SB));
-                    consumer.instruction(consumer.map().move(Register.BX, Register.AX));
+                    consumer.instruction(consumer.map().read(Register.SP, Register.SB));
                     break;
                 case DIV:
                     throw new AssertionError(binary.getOperator().name());
@@ -325,21 +303,4 @@ public class JassemblyCompiler {
         throw new UnsupportedOperationException(expression.toString());
     }
 
-//    private void resolve(JassemblyExpression eA, Register rA, JassemblyExpression eB, Register rB, Jmachine consumer) {
-//        if (eA instanceof RegisterExpression && eB instanceof RegisterExpression) {
-//            RegisterExpression a = (RegisterExpression) eA;
-//            RegisterExpression b = (RegisterExpression) eB;
-//            consumer.instruction(consumer.map().write(a.getRegister(), Register.SP, Register.NONE));
-//            consumer.instruction(consumer.map().move(b.getRegister(), rB));
-//            consumer.instruction(consumer.map().read(Register.SP, rA));
-//            return;
-//        }
-//        if (eB instanceof RegisterExpression) {
-//            resolve(eB, rB, consumer);
-//            resolve(eA, rA, consumer);
-//            return;
-//        }
-//        resolve(eA, rA, consumer);
-//        resolve(eB, rB, consumer);
-//    }
 }

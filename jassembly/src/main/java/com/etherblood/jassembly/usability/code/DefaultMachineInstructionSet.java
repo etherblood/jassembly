@@ -16,7 +16,7 @@ public class DefaultMachineInstructionSet extends SimpleMachineInstructionSet {
         instructions.add(mapping.noop());
         instructions.add(mapping.readInstruction());
         instructions.add(mapping.terminate());
-        
+
         for (Register a : Register.values()) {
             instructions.add(mapping.constantZero(a));
             instructions.add(mapping.constantOne(a));
@@ -41,24 +41,28 @@ public class DefaultMachineInstructionSet extends SimpleMachineInstructionSet {
         }
 
         for (Register a : Register.values()) {
-            instructions.add(mapping.any(a, a));
-            instructions.add(mapping.complement(a, a));
-            instructions.add(mapping.reverse(a, a));
-            instructions.add(mapping.negate(a, a));
-            instructions.add(mapping.identity(a, a));
-            instructions.add(mapping.increment(a, a));
-            instructions.add(mapping.decrement(a, a));
+            for (Register b : Register.values()) {
+                instructions.add(mapping.any(a, b));
+                instructions.add(mapping.complement(a, b));
+                instructions.add(mapping.reverse(a, b));
+                instructions.add(mapping.negate(a, b));
+                instructions.add(mapping.identity(a, b));
+                instructions.add(mapping.increment(a, b));
+                instructions.add(mapping.decrement(a, b));
+            }
         }
 
         for (Register a : Register.values()) {
             for (Register b : Register.values()) {
-                instructions.add(mapping.add(a, b, Register.AX));
-                instructions.add(mapping.subtract(a, b, Register.AX));
-                instructions.add(mapping.leftShift(a, b, Register.AX));
-                instructions.add(mapping.rightShift(a, b, Register.AX));
-                instructions.add(mapping.and(a, b, Register.AX));
-                instructions.add(mapping.or(a, b, Register.AX));
-                instructions.add(mapping.xor(a, b, Register.AX));
+                for (Register c : Register.values()) {
+                    instructions.add(mapping.add(a, b, c));
+                    instructions.add(mapping.subtract(a, b, c));
+                    instructions.add(mapping.leftShift(a, b, c));
+                    instructions.add(mapping.rightShift(a, b, c));
+                    instructions.add(mapping.and(a, b, c));
+                    instructions.add(mapping.or(a, b, c));
+                    instructions.add(mapping.xor(a, b, c));
+                }
             }
         }
 
