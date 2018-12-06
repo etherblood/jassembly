@@ -10,7 +10,6 @@ import com.etherblood.jassembly.compile.jassembly.machine.Jmachine;
 import com.etherblood.jassembly.compile.jassembly.machine.Labelled;
 import com.etherblood.jassembly.compile.jassembly.machine.JmachineCompiler;
 import com.etherblood.jassembly.compile.jassembly.machine.processor.ConstantInliner;
-import com.etherblood.jassembly.compile.jassembly.machine.processor.UnreachableCodeRemover;
 import com.etherblood.jassembly.compile.jassembly.machine.processor.NoopRemover;
 import com.etherblood.jassembly.compile.jassembly.language.parsing.tokens.Token;
 import com.etherblood.jassembly.compile.jassembly.machine.processor.MoveNormalizer;
@@ -36,7 +35,6 @@ public class SimpleCompiler {
         Jmachine jmachine = new Jmachine(mapping, instructionSet);
         new JassemblyCompiler().compile(assemblyInstructions, jmachine);
         List<Labelled> commands = jmachine.getInstructions();
-        commands = new UnreachableCodeRemover(mapping).removeDeadCode(commands);
         commands = new ConstantInliner(mapping).inlineConstants(commands);
         commands = new NoopRemover(mapping).removeNoops(commands);
         commands = new MoveNormalizer(mapping).normalizeMoves(commands);
