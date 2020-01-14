@@ -14,9 +14,7 @@ https://github.com/etherblood/jassembly/blob/master/jassembly/src/main/java/com/
 
 Compiling code into machine instructions:
 
-https://github.com/etherblood/jassembly/blob/master/jassembly/src/main/java/com/etherblood/jassembly/compile/Parser.java
-
-https://github.com/etherblood/jassembly/blob/master/jassembly/src/main/java/com/etherblood/jassembly/compile/CodeGenerator.java
+https://github.com/etherblood/jassembly/blob/master/jassembly/src/main/java/com/etherblood/jassembly/compile/SimpleCompiler.java
 
 
 Sample programs:
