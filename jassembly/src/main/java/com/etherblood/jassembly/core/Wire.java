@@ -11,6 +11,8 @@ public class Wire implements HasSignal {
 
     public static final int MAX_CHILDS = 256;
     private static final BinaryGate[] EMPTY = {};
+    private static final Wire ON = new Wire(true);
+    private static final Wire OFF = new Wire(false);
     private boolean signal;
     private BinaryGate[] childs = EMPTY;
 
@@ -25,6 +27,7 @@ public class Wire implements HasSignal {
 
     @Override
     public void setSignal(boolean signal) {
+        assert this != ON && this != OFF;
         this.signal = signal;
     }
 
@@ -33,6 +36,9 @@ public class Wire implements HasSignal {
     }
 
     void attachChild(BinaryGate child) {
+        if (this == ON || this == OFF) {
+            return;
+        }
         if (childs.length >= MAX_CHILDS) {
             throw new UnsupportedOperationException("Gate cannot have more than " + MAX_CHILDS + " children.");
         }
@@ -47,6 +53,9 @@ public class Wire implements HasSignal {
     }
 
     void detachChild(BinaryGate child) {
+        if (this == ON || this == OFF) {
+            return;
+        }
         removeChildAt(Arrays.asList(childs).indexOf(child));
     }
 
@@ -58,14 +67,14 @@ public class Wire implements HasSignal {
     }
 
     public static Wire on() {
-        return new Wire(true);
+        return ON;
     }
 
     public static Wire off() {
-        return new Wire(false);
+        return OFF;
     }
 
-    public static Wire instance(boolean signal) {
+    public static Wire mutable(boolean signal) {
         return new Wire(signal);
     }
 }

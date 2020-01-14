@@ -52,8 +52,8 @@ public class Computer {
     public final SimpleModule commandDecodeMux;
     public final SimpleModule ramAnd;
 
-    public final Wire clockWire = Wire.off();
-    public final Wire writeWire = Wire.off();
+    public final Wire clockWire = Wire.mutable(false);
+    public final Wire writeWire = Wire.mutable(false);
     
     private final MachineInstructionSet instructionSet;
 

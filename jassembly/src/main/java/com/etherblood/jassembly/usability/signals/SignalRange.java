@@ -1,7 +1,6 @@
 package com.etherblood.jassembly.usability.signals;
 
 import java.util.BitSet;
-import javax.xml.bind.DatatypeConverter;
 
 /**
  *
@@ -76,7 +75,11 @@ public class SignalRange {
                 b[i] = 0;
             }
         }
-        return "0x" + DatatypeConverter.printHexBinary(b);
+        String result = "";
+        for (int i = b.length - 1; i >= 0; i--) {
+            result += Integer.toHexString(b[i]);
+        }
+        return "0x" + result;
 
     }
 

@@ -1,27 +1,11 @@
 package com.etherblood.jassembly.core;
 
+import java.util.Objects;
+
 public abstract class BinaryGate {
 
-    private Wire a, b;
-    private final Wire out;
-
-    public BinaryGate() {
-        this(Wire.off(), Wire.off());
-    }
-
-    public BinaryGate(Wire a, Wire b) {
-        this(a, b, Wire.off());
-    }
-
-    public BinaryGate(Wire a, Wire b, Wire out) {
-        this.a = a;
-        this.b = b;
-        this.out = out;
-        a.attachChild(this);
-        if (a != b) {
-            b.attachChild(this);
-        }
-    }
+    private Wire a = Wire.off(), b = Wire.off();
+    private final Wire out = Wire.mutable(false);
 
     boolean compute() {
         return compute(a.getSignal(), b.getSignal());
@@ -33,7 +17,7 @@ public abstract class BinaryGate {
         if (a != b) {
             a.detachChild(this);
         }
-        a = wire;
+        a = Objects.requireNonNull(wire);
         if (a != b) {
             a.attachChild(this);
         }
@@ -43,7 +27,7 @@ public abstract class BinaryGate {
         if (a != b) {
             b.detachChild(this);
         }
-        b = wire;
+        b = Objects.requireNonNull(wire);
         if (a != b) {
             b.attachChild(this);
         }
